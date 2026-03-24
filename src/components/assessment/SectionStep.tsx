@@ -1,15 +1,15 @@
 import { useAssessment } from '@/context/AssessmentContext';
-import { Section, getStatusFromDropdownValue, getStrengthLevel } from '@/data/assessmentData';
+import { Section, Parameter, getParameterStatus, getStrengthLevel } from '@/data/assessmentData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === 'pass') return <Badge className="bg-[hsl(var(--status-pass))] text-white">✅ Pass</Badge>;
-  if (status === 'restricted') return <Badge className="bg-[hsl(var(--status-restricted))] text-white">⚠️ Restricted</Badge>;
-  if (status === 'issue') return <Badge className="bg-[hsl(var(--status-issue))] text-white">🔴 Issue</Badge>;
+function OutputFlag({ status }: { status: string }) {
+  if (status === 'pass') return <Badge className="bg-[hsl(var(--status-pass))] text-white text-xs gap-1">✅ Pass</Badge>;
+  if (status === 'restricted') return <Badge className="bg-[hsl(var(--status-restricted))] text-white text-xs gap-1">⚠️ Restricted</Badge>;
+  if (status === 'painful') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs gap-1">🔴 Painful</Badge>;
   return null;
 }
 
@@ -19,7 +19,69 @@ function LevelBadge({ level }: { level: string }) {
     Intermediate: 'bg-[hsl(var(--status-restricted))] text-white',
     Beginner: 'bg-[hsl(var(--status-issue))] text-white',
   };
-  return <Badge className={colors[level] || ''}>{level}</Badge>;
+  return <Badge className={`${colors[level] || ''} text-xs`}>{level}</Badge>;
+}
+
+function ParameterRow({ param }: { param: Parameter }) {
+  const { dropdownResults, numericResults, setDropdownResult, setNumericResult } = useAssessment();
+
+  const dropdownVal = dropdownResults[param.id];
+  const numericVal = numericResults[param.id];
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 py-2 px-3 rounded-md bg-muted/40 border border-border/50">
+      <div className="sm:w-40 shrink-0">
+        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {param.name}
+        </Label>
+      </div>
+
+      <div className="flex-1">
+        {param.type === 'dropdown' && param.options && (
+          <Select value={dropdownVal || ''} onValueChange={v => setDropdownResult(param.id, v)}>
+            <SelectTrigger className="w-full h-9 text-sm">
+              <SelectValue placeholder="Select benchmark..." />
+            </SelectTrigger>
+            <SelectContent>
+              {param.options.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {param.type === 'number' && (
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              value={numericVal ?? ''}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === '') return;
+                setNumericResult(param.id, Number(val));
+              }}
+              placeholder={`Enter ${param.unit || 'value'}`}
+              className="w-32 h-9 text-sm"
+            />
+            {param.unit && <span className="text-xs text-muted-foreground">{param.unit}</span>}
+          </div>
+        )}
+      </div>
+
+      <div className="sm:w-28 shrink-0 flex justify-end">
+        {param.type === 'dropdown' && dropdownVal && (
+          <OutputFlag status={getParameterStatus(param, dropdownVal)} />
+        )}
+        {param.type === 'number' && param.benchmarks && numericVal !== undefined && (
+          <LevelBadge level={getStrengthLevel(
+            numericVal,
+            param.benchmarks,
+            param.id === 'counting_breath_rate'
+          )} />
+        )}
+      </div>
+    </div>
+  );
 }
 
 interface Props {
@@ -27,87 +89,60 @@ interface Props {
 }
 
 export function SectionStep({ section }: Props) {
-  const { dropdownResults, numericResults, testNotes, setDropdownResult, setNumericResult, setTestNote } = useAssessment();
-
-  const renderTest = (test: (typeof section.tests extends (infer T)[] | undefined ? T : never)) => {
-    if (!test) return null;
-
-    return (
-      <div key={test.id} className="rounded-lg border border-border bg-card p-4 space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <Label className="text-sm font-semibold text-foreground">{test.name}</Label>
-          {test.type === 'dropdown' && dropdownResults[test.id] && (
-            <StatusBadge status={getStatusFromDropdownValue(test, dropdownResults[test.id])} />
-          )}
-          {test.type === 'number' && test.benchmarks && numericResults[test.id] !== undefined && (
-            <LevelBadge level={getStrengthLevel(
-              numericResults[test.id],
-              test.benchmarks,
-              test.id === 'counting_breath'
-            )} />
-          )}
-        </div>
-
-        {test.type === 'dropdown' && test.options && (
-          <Select value={dropdownResults[test.id] || ''} onValueChange={v => setDropdownResult(test.id, v)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select result..." />
-            </SelectTrigger>
-            <SelectContent>
-              {test.options.map(opt => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
-        {test.type === 'number' && (
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              value={numericResults[test.id] ?? ''}
-              onChange={e => {
-                const val = e.target.value;
-                if (val === '') return;
-                setNumericResult(test.id, Number(val));
-              }}
-              placeholder={`Enter ${test.unit || 'value'}`}
-              className="w-40"
-            />
-            {test.unit && <span className="text-sm text-muted-foreground">{test.unit}</span>}
-          </div>
-        )}
-
-        <Textarea
-          value={testNotes[test.id] || ''}
-          onChange={e => setTestNote(test.id, e.target.value)}
-          placeholder="Coach notes (optional)..."
-          rows={2}
-          className="text-sm"
-        />
-      </div>
-    );
-  };
+  const { testNotes, setTestNote } = useAssessment();
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground">{section.icon} {section.name}</h2>
-        <p className="text-muted-foreground mt-1">Complete each test below and select the appropriate result.</p>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Select the appropriate benchmark for each parameter. Output flags update automatically.
+        </p>
       </div>
 
       {section.subsections?.map(sub => (
-        <div key={sub.id} className="space-y-3">
+        <div key={sub.id} className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">{sub.name}</h3>
-          <div className="grid grid-cols-1 gap-3">
-            {sub.tests.map(renderTest)}
-          </div>
+
+          {sub.tests.map(test => (
+            <div key={test.id} className="space-y-2">
+              <h4 className="text-sm font-bold text-foreground ml-1">{test.name}</h4>
+              <div className="space-y-1">
+                {test.parameters.map(param => (
+                  <ParameterRow key={param.id} param={param} />
+                ))}
+              </div>
+              <Textarea
+                value={testNotes[test.id] || ''}
+                onChange={e => setTestNote(test.id, e.target.value)}
+                placeholder="Coach notes (optional)..."
+                rows={2}
+                className="text-sm mt-1"
+              />
+            </div>
+          ))}
         </div>
       ))}
 
       {section.tests && (
-        <div className="grid grid-cols-1 gap-3">
-          {section.tests.map(renderTest)}
+        <div className="space-y-4">
+          {section.tests.map(test => (
+            <div key={test.id} className="space-y-2">
+              <h4 className="text-sm font-bold text-foreground ml-1">{test.name}</h4>
+              <div className="space-y-1">
+                {test.parameters.map(param => (
+                  <ParameterRow key={param.id} param={param} />
+                ))}
+              </div>
+              <Textarea
+                value={testNotes[test.id] || ''}
+                onChange={e => setTestNote(test.id, e.target.value)}
+                placeholder="Coach notes (optional)..."
+                rows={2}
+                className="text-sm mt-1"
+              />
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAssessment } from '@/context/AssessmentContext';
-import { allSections, getStatusFromDropdownValue, getStrengthLevel } from '@/data/assessmentData';
+import { allSections, getAllParameters, getParameterStatus, getStrengthLevel, getSectionStatus } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -8,8 +8,14 @@ import { Card } from '@/components/ui/card';
 function StatusBadge({ status }: { status: string }) {
   if (status === 'pass') return <Badge className="bg-[hsl(var(--status-pass))] text-white text-xs">✅ Pass</Badge>;
   if (status === 'restricted') return <Badge className="bg-[hsl(var(--status-restricted))] text-white text-xs">⚠️ Restricted</Badge>;
-  if (status === 'issue') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs">🔴 Issue</Badge>;
-  return <Badge variant="outline" className="text-xs">Not tested</Badge>;
+  if (status === 'painful') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs">🔴 Painful</Badge>;
+  return <Badge variant="outline" className="text-xs">—</Badge>;
+}
+
+function SectionResultBadge({ result }: { result: 'pass' | 'limitation' | 'red_flag' }) {
+  if (result === 'pass') return <Badge className="bg-[hsl(var(--status-pass))] text-white">✅ PASS</Badge>;
+  if (result === 'limitation') return <Badge className="bg-[hsl(var(--status-restricted))] text-white">⚠️ LIMITED</Badge>;
+  return <Badge className="bg-[hsl(var(--status-issue))] text-white">🔴 RED FLAG</Badge>;
 }
 
 export default function CoachReport() {
@@ -19,7 +25,7 @@ export default function CoachReport() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card no-print">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">Coach Detailed Report</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate('/report/client')}>View Client Report</Button>
@@ -29,7 +35,7 @@ export default function CoachReport() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         {/* Client Info */}
         <Card className="p-6">
           <h2 className="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">Client Information</h2>
@@ -47,92 +53,119 @@ export default function CoachReport() {
           )}
         </Card>
 
-        {/* All Sections */}
+        {/* Assessment Sections as Tables */}
         {allSections.map(section => {
-          const tests = section.tests || [];
-          const subsectionTests = (section.subsections || []).flatMap(s => s.tests);
-          const allTests = [...tests, ...subsectionTests];
+          const sectionResult = getSectionStatus(section, dropdownResults, numericResults);
 
           return (
             <Card key={section.id} className="p-6 print-break">
-              <h2 className="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">{section.icon} {section.name}</h2>
+              <div className="flex items-center justify-between mb-4 border-b border-border pb-2">
+                <h2 className="text-lg font-bold text-foreground">{section.icon} {section.name}</h2>
+                <SectionResultBadge result={sectionResult} />
+              </div>
 
-              {section.subsections?.map(sub => (
-                <div key={sub.id} className="mb-6">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">{sub.name}</h3>
-                  <div className="space-y-2">
-                    {sub.tests.map(test => {
-                      const val = dropdownResults[test.id];
-                      const numVal = numericResults[test.id];
-                      const note = testNotes[test.id];
-                      const status = test.type === 'dropdown' && val ? getStatusFromDropdownValue(test, val) : undefined;
-                      const selectedLabel = test.options?.find(o => o.value === val)?.label;
+              {/* Table header */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Component</th>
+                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Test</th>
+                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Parameter</th>
+                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Benchmark / Finding</th>
+                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Output</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {section.subsections?.map(sub =>
+                      sub.tests.map(test =>
+                        test.parameters.map((param, pIdx) => {
+                          const val = param.type === 'dropdown' ? dropdownResults[param.id] : undefined;
+                          const numVal = param.type === 'number' ? numericResults[param.id] : undefined;
+                          const selectedLabel = param.options?.find(o => o.value === val)?.label;
+                          const status = val ? getParameterStatus(param, val) : undefined;
+                          const isInvert = param.id === 'counting_breath_rate';
+                          const level = param.type === 'number' && param.benchmarks && numVal !== undefined
+                            ? getStrengthLevel(numVal, param.benchmarks, isInvert) : undefined;
 
-                      return (
-                        <div key={test.id} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/50 text-sm">
-                          <div className="flex-1">
-                            <div className="font-medium text-foreground">{test.name}</div>
-                            {selectedLabel && <div className="text-muted-foreground mt-0.5">{selectedLabel}</div>}
-                            {test.type === 'number' && numVal !== undefined && (
-                              <div className="text-muted-foreground mt-0.5">{numVal} {test.unit}</div>
-                            )}
-                            {note && <div className="mt-1 text-xs text-muted-foreground italic">Note: {note}</div>}
-                          </div>
-                          {status && <StatusBadge status={status} />}
-                          {test.type === 'number' && test.benchmarks && numVal !== undefined && (
-                            <Badge className={
-                              getStrengthLevel(numVal, test.benchmarks, test.id === 'counting_breath') === 'Advanced'
-                                ? 'bg-[hsl(var(--status-pass))] text-white text-xs'
-                                : getStrengthLevel(numVal, test.benchmarks, test.id === 'counting_breath') === 'Intermediate'
-                                ? 'bg-[hsl(var(--status-restricted))] text-white text-xs'
-                                : 'bg-[hsl(var(--status-issue))] text-white text-xs'
-                            }>
-                              {getStrengthLevel(numVal, test.benchmarks, test.id === 'counting_breath')}
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+                          return (
+                            <tr key={param.id} className="border-b border-border/50 hover:bg-muted/30">
+                              <td className="py-2 px-2 text-muted-foreground">{pIdx === 0 ? sub.name : ''}</td>
+                              <td className="py-2 px-2 font-medium text-foreground">{pIdx === 0 ? test.name : ''}</td>
+                              <td className="py-2 px-2 text-foreground">{param.name}</td>
+                              <td className="py-2 px-2 text-foreground">
+                                {selectedLabel || (numVal !== undefined ? `${numVal} ${param.unit || ''}` : '—')}
+                              </td>
+                              <td className="py-2 px-2">
+                                {status && <StatusBadge status={status} />}
+                                {level && (
+                                  <Badge className={`text-xs ${
+                                    level === 'Advanced' ? 'bg-[hsl(var(--status-pass))] text-white' :
+                                    level === 'Intermediate' ? 'bg-[hsl(var(--status-restricted))] text-white' :
+                                    'bg-[hsl(var(--status-issue))] text-white'
+                                  }`}>{level}</Badge>
+                                )}
+                                {!status && !level && <span className="text-muted-foreground">—</span>}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )
+                    )}
+                    {section.tests?.map(test =>
+                      test.parameters.map((param, pIdx) => {
+                        const val = param.type === 'dropdown' ? dropdownResults[param.id] : undefined;
+                        const numVal = param.type === 'number' ? numericResults[param.id] : undefined;
+                        const selectedLabel = param.options?.find(o => o.value === val)?.label;
+                        const status = val ? getParameterStatus(param, val) : undefined;
+                        const isInvert = param.id === 'counting_breath_rate';
+                        const level = param.type === 'number' && param.benchmarks && numVal !== undefined
+                          ? getStrengthLevel(numVal, param.benchmarks, isInvert) : undefined;
 
-              {section.tests && (
-                <div className="space-y-2">
-                  {section.tests.map(test => {
-                    const val = dropdownResults[test.id];
-                    const numVal = numericResults[test.id];
-                    const note = testNotes[test.id];
-                    const status = test.type === 'dropdown' && val ? getStatusFromDropdownValue(test, val) : undefined;
-                    const selectedLabel = test.options?.find(o => o.value === val)?.label;
+                        return (
+                          <tr key={param.id} className="border-b border-border/50 hover:bg-muted/30">
+                            <td className="py-2 px-2 text-muted-foreground">{section.component}</td>
+                            <td className="py-2 px-2 font-medium text-foreground">{pIdx === 0 ? test.name : ''}</td>
+                            <td className="py-2 px-2 text-foreground">{param.name}</td>
+                            <td className="py-2 px-2 text-foreground">
+                              {selectedLabel || (numVal !== undefined ? `${numVal} ${param.unit || ''}` : '—')}
+                            </td>
+                            <td className="py-2 px-2">
+                              {status && <StatusBadge status={status} />}
+                              {level && (
+                                <Badge className={`text-xs ${
+                                  level === 'Advanced' ? 'bg-[hsl(var(--status-pass))] text-white' :
+                                  level === 'Intermediate' ? 'bg-[hsl(var(--status-restricted))] text-white' :
+                                  'bg-[hsl(var(--status-issue))] text-white'
+                                }`}>{level}</Badge>
+                              )}
+                              {!status && !level && <span className="text-muted-foreground">—</span>}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-                    return (
-                      <div key={test.id} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-muted/50 text-sm">
-                        <div className="flex-1">
-                          <div className="font-medium text-foreground">{test.name}</div>
-                          {selectedLabel && <div className="text-muted-foreground mt-0.5">{selectedLabel}</div>}
-                          {test.type === 'number' && numVal !== undefined && (
-                            <div className="text-muted-foreground mt-0.5">{numVal} {test.unit}</div>
-                          )}
-                          {note && <div className="mt-1 text-xs text-muted-foreground italic">Note: {note}</div>}
-                        </div>
-                        {status && <StatusBadge status={status} />}
-                        {test.type === 'number' && test.benchmarks && numVal !== undefined && (
-                          <Badge className={
-                            getStrengthLevel(numVal, test.benchmarks, test.id === 'counting_breath') === 'Advanced'
-                              ? 'bg-[hsl(var(--status-pass))] text-white text-xs'
-                              : getStrengthLevel(numVal, test.benchmarks, test.id === 'counting_breath') === 'Intermediate'
-                              ? 'bg-[hsl(var(--status-restricted))] text-white text-xs'
-                              : 'bg-[hsl(var(--status-issue))] text-white text-xs'
-                          }>
-                            {getStrengthLevel(numVal, test.benchmarks, test.id === 'counting_breath')}
-                          </Badge>
-                        )}
+              {/* Test notes */}
+              {(() => {
+                const allTests = [...(section.subsections?.flatMap(s => s.tests) || []), ...(section.tests || [])];
+                const notedTests = allTests.filter(t => testNotes[t.id]);
+                if (notedTests.length === 0) return null;
+                return (
+                  <div className="mt-4 space-y-2">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">Coach Notes</h4>
+                    {notedTests.map(t => (
+                      <div key={t.id} className="text-sm p-2 bg-muted/30 rounded">
+                        <span className="font-medium text-foreground">{t.name}:</span>{' '}
+                        <span className="text-muted-foreground italic">{testNotes[t.id]}</span>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    ))}
+                  </div>
+                );
+              })()}
             </Card>
           );
         })}
