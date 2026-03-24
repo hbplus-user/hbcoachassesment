@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAssessment } from '@/context/AssessmentContext';
-import { allSections, getStatusFromDropdownValue, getStrengthLevel, calculateOverallScore, getSectionScore } from '@/data/assessmentData';
+import { allSections, getAllParameters, getParameterStatus, getStrengthLevel, calculateOverallScore, getSectionScore } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -12,30 +12,27 @@ export default function ClientReport() {
   const overallScore = calculateOverallScore(dropdownResults, numericResults);
 
   // Collect red flags / issues
-  const issues: { section: string; description: string; severity: 'issue' | 'restricted' }[] = [];
+  const issues: { section: string; testName: string; paramName: string; severity: 'painful' | 'restricted' }[] = [];
 
   for (const section of allSections) {
-    const tests = section.tests || [];
-    const subsectionTests = (section.subsections || []).flatMap(s => s.tests);
-    const allTests = [...tests, ...subsectionTests];
-
-    for (const test of allTests) {
-      if (test.type === 'dropdown') {
-        const val = dropdownResults[test.id];
+    const params = getAllParameters(section);
+    for (const { param, testName } of params) {
+      if (param.type === 'dropdown') {
+        const val = dropdownResults[param.id];
         if (val) {
-          const status = getStatusFromDropdownValue(test, val);
-          if (status === 'issue') {
-            issues.push({ section: section.name, description: test.name, severity: 'issue' });
+          const status = getParameterStatus(param, val);
+          if (status === 'painful') {
+            issues.push({ section: section.name, testName, paramName: param.name, severity: 'painful' });
           } else if (status === 'restricted') {
-            issues.push({ section: section.name, description: test.name, severity: 'restricted' });
+            issues.push({ section: section.name, testName, paramName: param.name, severity: 'restricted' });
           }
         }
-      } else if (test.type === 'number' && test.benchmarks) {
-        const val = numericResults[test.id];
+      } else if (param.type === 'number' && param.benchmarks) {
+        const val = numericResults[param.id];
         if (val !== undefined) {
-          const level = getStrengthLevel(val, test.benchmarks, test.id === 'counting_breath');
+          const level = getStrengthLevel(val, param.benchmarks, param.id === 'counting_breath_rate');
           if (level === 'Beginner') {
-            issues.push({ section: section.name, description: `${test.name} — needs improvement`, severity: 'restricted' });
+            issues.push({ section: section.name, testName, paramName: `${param.name} — needs improvement`, severity: 'restricted' });
           }
         }
       }
@@ -117,17 +114,19 @@ export default function ClientReport() {
           <Card className="p-6 print-break">
             <h2 className="text-lg font-bold text-foreground mb-4">Areas Requiring Attention</h2>
             <div className="space-y-2">
-              {issues.filter(i => i.severity === 'issue').map((issue, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-[hsl(var(--status-issue))]/10 text-sm">
+              {issues.filter(i => i.severity === 'painful').map((issue, idx) => (
+                <div key={`p-${idx}`} className="flex items-center gap-2 p-2 rounded-lg bg-[hsl(var(--status-issue))]/10 text-sm">
                   <span>🔴</span>
-                  <span className="text-foreground">{issue.description}</span>
+                  <span className="text-foreground font-medium">{issue.testName}</span>
+                  <span className="text-muted-foreground">— {issue.paramName}</span>
                   <span className="text-muted-foreground text-xs ml-auto">{issue.section}</span>
                 </div>
               ))}
               {issues.filter(i => i.severity === 'restricted').map((issue, idx) => (
-                <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-[hsl(var(--status-restricted))]/10 text-sm">
+                <div key={`r-${idx}`} className="flex items-center gap-2 p-2 rounded-lg bg-[hsl(var(--status-restricted))]/10 text-sm">
                   <span>⚠️</span>
-                  <span className="text-foreground">{issue.description}</span>
+                  <span className="text-foreground font-medium">{issue.testName}</span>
+                  <span className="text-muted-foreground">— {issue.paramName}</span>
                   <span className="text-muted-foreground text-xs ml-auto">{issue.section}</span>
                 </div>
               ))}
