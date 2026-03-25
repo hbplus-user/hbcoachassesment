@@ -1,12 +1,11 @@
 // Status flags and severity levels
-export type StatusFlag = 'pass' | 'restricted' | 'painful';
 export type SeverityLevel = 'green' | 'yellow' | 'red';
 
 export interface BenchmarkOption {
   label: string;
   value: string;
-  status: StatusFlag;
   severity: SeverityLevel;
+  outputFlag: string;
   description?: string;
 }
 
@@ -16,12 +15,14 @@ export interface Parameter {
   type: 'dropdown' | 'number';
   options?: BenchmarkOption[];
   unit?: string;
-  benchmarks?: { beginner: number; intermediate: number; advanced: number };
+  benchmarks?: { beginner: number; intermediate: number; advanced: number; labels?: [string, string, string] };
 }
 
 export interface TestDefinition {
   id: string;
   name: string;
+  minAge?: number;
+  maxAge?: number;
   parameters: Parameter[];
 }
 
@@ -41,11 +42,11 @@ export interface Section {
 }
 
 // Helpers
-const opt = (label: string, value: string, status: StatusFlag): BenchmarkOption => ({
+const opt = (label: string, value: string, severity: SeverityLevel, outputFlag: string): BenchmarkOption => ({
   label,
   value,
-  status,
-  severity: status === 'pass' ? 'green' : status === 'restricted' ? 'yellow' : 'red',
+  severity,
+  outputFlag,
 });
 
 // ============ MOBILITY ASSESSMENT ============
@@ -57,7 +58,7 @@ export const mobilitySection: Section = {
   subsections: [
     {
       id: 'cervical',
-      name: 'Cervical Mobility',
+      name: 'Cervical',
       tests: [
         {
           id: 'cervical_flexion',
@@ -68,8 +69,8 @@ export const mobilitySection: Section = {
               name: 'Movement',
               type: 'dropdown',
               options: [
-                opt('Chin touches sternum (Pass)', 'pass', 'pass'),
-                opt('Less than 45° movement (Restricted)', 'restricted', 'restricted'),
+                opt('Chin touches / very close to sternum', 'pass', 'green', 'Pass'),
+                opt('< 45° of movement', 'restricted', 'red', 'Restricted'),
               ],
             },
             {
@@ -77,8 +78,8 @@ export const mobilitySection: Section = {
               name: 'Pain',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain at neck or top of shoulders (Painful)', 'pain', 'painful'),
+                opt('No pain', 'pass', 'green', 'Pass'),
+                opt('Pain at neck or top of shoulders', 'pain', 'red', 'Painful'),
               ],
             },
             {
@@ -86,8 +87,8 @@ export const mobilitySection: Section = {
               name: 'Compensatory Factor',
               type: 'dropdown',
               options: [
-                opt('No thoracic compensation (Pass)', 'pass', 'pass'),
-                opt('Excess thoracic flexion (Compensated)', 'compensated', 'restricted'),
+                opt('No thoracic compensation', 'pass', 'green', 'Pass'),
+                opt('Excess thoracic flexion', 'compensated', 'red', 'Compensated'),
               ],
             },
           ],
@@ -101,8 +102,8 @@ export const mobilitySection: Section = {
               name: 'Movement',
               type: 'dropdown',
               options: [
-                opt('Face parallel to ceiling (Pass)', 'pass', 'pass'),
-                opt('Less than 45° extension (Restricted)', 'restricted', 'restricted'),
+                opt('80°+ extension', 'pass', 'green', 'Pass'),
+                opt('Eyes cannot reach horizontal', 'restricted', 'red', 'Restriction'),
               ],
             },
             {
@@ -110,8 +111,8 @@ export const mobilitySection: Section = {
               name: 'Pain',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present during extension (Painful)', 'pain', 'painful'),
+                opt('No pain', 'pass', 'green', 'Pass'),
+                opt('Pain present', 'pain', 'red', 'Painful'),
               ],
             },
             {
@@ -119,104 +120,41 @@ export const mobilitySection: Section = {
               name: 'Compensatory Factor',
               type: 'dropdown',
               options: [
-                opt('No lumbar compensation (Pass)', 'pass', 'pass'),
-                opt('Excess lumbar extension (Compensated)', 'compensated', 'restricted'),
+                opt('No low-back compensation', 'pass', 'green', 'Pass'),
+                opt('Lumbar hinge pattern', 'compensated', 'red', 'Compensated'),
               ],
             },
           ],
         },
         {
-          id: 'cervical_rotation_left',
-          name: 'Cervical Rotation (Left)',
+          id: 'cervical_rotation',
+          name: 'Cervical Rotation (L + R)',
           parameters: [
             {
-              id: 'cervical_rotation_left_movement',
+              id: 'cervical_rotation_movement',
               name: 'Movement',
               type: 'dropdown',
               options: [
-                opt('Chin over shoulder (Pass)', 'pass', 'pass'),
-                opt('Limited rotation (Restricted)', 'restricted', 'restricted'),
+                opt('80° rotation', 'pass', 'green', 'Pass'),
+                opt('Asymmetry > 10°', 'restricted', 'red', 'Restriction'),
               ],
             },
             {
-              id: 'cervical_rotation_left_pain',
+              id: 'cervical_rotation_pain',
               name: 'Pain',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'cervical_rotation_right',
-          name: 'Cervical Rotation (Right)',
-          parameters: [
-            {
-              id: 'cervical_rotation_right_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('Chin over shoulder (Pass)', 'pass', 'pass'),
-                opt('Limited rotation (Restricted)', 'restricted', 'restricted'),
+                opt('No pain', 'pass', 'green', 'Pass'),
+                opt('Pain present', 'pain', 'red', 'Painful'),
               ],
             },
             {
-              id: 'cervical_rotation_right_pain',
-              name: 'Pain',
+              id: 'cervical_rotation_symmetry',
+              name: 'Symmetry',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'cervical_lateral_left',
-          name: 'Lateral Flexion (Left)',
-          parameters: [
-            {
-              id: 'cervical_lateral_left_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('Ear towards shoulder (Pass)', 'pass', 'pass'),
-                opt('Limited movement (Restricted)', 'restricted', 'restricted'),
-              ],
-            },
-            {
-              id: 'cervical_lateral_left_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'cervical_lateral_right',
-          name: 'Lateral Flexion (Right)',
-          parameters: [
-            {
-              id: 'cervical_lateral_right_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('Ear towards shoulder (Pass)', 'pass', 'pass'),
-                opt('Limited movement (Restricted)', 'restricted', 'restricted'),
-              ],
-            },
-            {
-              id: 'cervical_lateral_right_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
+                opt('Symmetrical', 'pass', 'green', 'Pass'),
+                opt('Tightness on one side', 'imbalance', 'red', 'Muscle Imbalance'),
               ],
             },
           ],
@@ -225,20 +163,28 @@ export const mobilitySection: Section = {
     },
     {
       id: 'hip',
-      name: 'Hip Mobility',
+      name: 'Hip',
       tests: [
         {
           id: 'hip_flexion',
-          name: 'Hip Flexion',
+          name: 'Flexion',
           parameters: [
             {
-              id: 'hip_flexion_rom',
-              name: 'Range of Motion',
+              id: 'hip_flexion_movement',
+              name: 'Movement',
               type: 'dropdown',
               options: [
-                opt('120°+ flexion (Pass)', 'pass', 'pass'),
-                opt('90-120° flexion (Restricted)', 'restricted', 'restricted'),
-                opt('Less than 90° (Severely Limited)', 'severe', 'painful'),
+                opt('Thigh reaches ≥ 120° hip flexion', 'pass', 'green', 'Pass'),
+                opt('Thigh < 120°', 'restricted', 'red', 'Restricted'),
+              ],
+            },
+            {
+              id: 'hip_flexion_pelvic',
+              name: 'Pelvic Control',
+              type: 'dropdown',
+              options: [
+                opt('Sacrum stays neutral', 'pass', 'green', 'Pass'),
+                opt('Posterior pelvic tilt', 'poor_control', 'red', 'Poor Pelvic Control'),
               ],
             },
             {
@@ -246,33 +192,41 @@ export const mobilitySection: Section = {
               name: 'Pain',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain in hip or groin (Painful)', 'pain', 'painful'),
+                opt('No pain', 'pass', 'green', 'Pass'),
+                opt('Pain / pinching in hip or groin', 'painful', 'red', 'Painful'),
               ],
             },
           ],
         },
         {
           id: 'hip_extension',
-          name: 'Hip Extension',
+          name: 'Extension',
           parameters: [
             {
-              id: 'hip_extension_rom',
-              name: 'Range of Motion',
+              id: 'hip_extension_movement',
+              name: 'Movement',
               type: 'dropdown',
               options: [
-                opt('20°+ extension (Pass)', 'pass', 'pass'),
-                opt('10-20° extension (Restricted)', 'restricted', 'restricted'),
-                opt('Less than 10° (Severely Limited)', 'severe', 'painful'),
+                opt('Thigh drops to table or below', 'pass', 'green', 'Pass'),
+                opt('Thigh remains elevated', 'tight_flexor', 'red', 'Hip Flexor Tightness'),
               ],
             },
             {
-              id: 'hip_extension_pain',
-              name: 'Pain',
+              id: 'hip_extension_compensation',
+              name: 'Compensation',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
+                opt('Knee flexes ~80–90°', 'pass', 'green', 'Pass'),
+                opt('Excess lumbar arch', 'lumbar_comp', 'red', 'Lumbar Compensation'),
+              ],
+            },
+            {
+              id: 'hip_extension_tightness',
+              name: 'Tightness',
+              type: 'dropdown',
+              options: [
+                opt('Pelvis neutral', 'pass', 'green', 'Pass'),
+                opt('Knee extends (rectus femoris)', 'rectus_tight', 'red', 'Rectus Femoris Tight'),
               ],
             },
           ],
@@ -282,22 +236,21 @@ export const mobilitySection: Section = {
           name: 'Internal Rotation',
           parameters: [
             {
-              id: 'hip_ir_rom',
-              name: 'Range of Motion',
+              id: 'hip_ir_movement',
+              name: 'Movement',
               type: 'dropdown',
               options: [
-                opt('35°+ rotation (Pass)', 'pass', 'pass'),
-                opt('20-35° rotation (Restricted)', 'restricted', 'restricted'),
-                opt('Less than 20° (Severely Limited)', 'severe', 'painful'),
+                opt('30–40° IR', 'pass', 'green', 'Pass'),
+                opt('< 30°', 'restricted', 'red', 'Restriction'),
               ],
             },
             {
-              id: 'hip_ir_pain',
-              name: 'Pain',
+              id: 'hip_ir_pelvis',
+              name: 'Pelvis Position',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
+                opt('Pelvis stable', 'pass', 'green', 'Pass'),
+                opt('Pelvic shift', 'dissociation', 'red', 'Hip-Pelvis Dissociation'),
               ],
             },
           ],
@@ -307,22 +260,69 @@ export const mobilitySection: Section = {
           name: 'External Rotation',
           parameters: [
             {
-              id: 'hip_er_rom',
-              name: 'Range of Motion',
+              id: 'hip_er_movement',
+              name: 'Movement',
               type: 'dropdown',
               options: [
-                opt('45°+ rotation (Pass)', 'pass', 'pass'),
-                opt('30-45° rotation (Restricted)', 'restricted', 'restricted'),
-                opt('Less than 30° (Severely Limited)', 'severe', 'painful'),
+                opt('40–50° ER', 'pass', 'green', 'Pass'),
+                opt('< 40°', 'restricted', 'red', 'Restriction'),
               ],
             },
             {
-              id: 'hip_er_pain',
-              name: 'Pain',
+              id: 'hip_er_pelvis',
+              name: 'Pelvis Position',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
+                opt('Pelvis stable', 'pass', 'green', 'Pass'),
+                opt('Trunk lean or pelvic rotation', 'rotational_control', 'red', 'Rotational Hip Control'),
+              ],
+            },
+          ],
+        },
+        {
+          id: 'hip_abduction',
+          name: 'Abduction',
+          parameters: [
+            {
+              id: 'hip_abd_movement',
+              name: 'Movement',
+              type: 'dropdown',
+              options: [
+                opt('35–45° abduction', 'pass', 'green', 'Pass'),
+                opt('Limited lift', 'restricted', 'red', 'Restricted'),
+              ],
+            },
+            {
+              id: 'hip_abd_pelvic',
+              name: 'Pelvic Stability',
+              type: 'dropdown',
+              options: [
+                opt('Pelvis stacked', 'pass', 'green', 'Pass'),
+                opt('Pelvic hike or roll', 'instability', 'red', 'Pelvic Instability'),
+              ],
+            },
+          ],
+        },
+        {
+          id: 'hip_adduction',
+          name: 'Adduction',
+          parameters: [
+            {
+              id: 'hip_add_movement',
+              name: 'Movement',
+              type: 'dropdown',
+              options: [
+                opt('20–30° adduction', 'pass', 'green', 'Pass'),
+                opt('Limited ROM', 'restriction', 'red', 'Restriction'),
+              ],
+            },
+            {
+              id: 'hip_add_pelvic',
+              name: 'Pelvic Stability',
+              type: 'dropdown',
+              options: [
+                opt('Pelvis stable', 'pass', 'green', 'Pass'),
+                opt('Trunk shift', 'instability', 'red', 'Medial Hip Instability'),
               ],
             },
           ],
@@ -331,20 +331,19 @@ export const mobilitySection: Section = {
     },
     {
       id: 'ankle',
-      name: 'Ankle Mobility',
+      name: 'Ankle',
       tests: [
         {
           id: 'ankle_dorsiflexion',
           name: 'Dorsiflexion',
           parameters: [
             {
-              id: 'ankle_df_rom',
-              name: 'Range of Motion',
+              id: 'ankle_df_movement',
+              name: 'Movement',
               type: 'dropdown',
               options: [
-                opt('Knee past toes (Pass)', 'pass', 'pass'),
-                opt('Knee reaches toes (Restricted)', 'restricted', 'restricted'),
-                opt('Knee behind toes (Severely Limited)', 'severe', 'painful'),
+                opt('Knee touches wall, heel stays down', 'pass', 'green', 'Pass'),
+                opt('Knee cannot reach wall / heel lifts', 'restricted', 'red', 'Restricted'),
               ],
             },
             {
@@ -352,32 +351,26 @@ export const mobilitySection: Section = {
               name: 'Pain',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain at ankle (Painful)', 'pain', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'ankle_plantarflexion',
-          name: 'Plantarflexion',
-          parameters: [
-            {
-              id: 'ankle_pf_rom',
-              name: 'Range of Motion',
-              type: 'dropdown',
-              options: [
-                opt('Full point achievable (Pass)', 'pass', 'pass'),
-                opt('Limited range (Restricted)', 'restricted', 'restricted'),
+                opt('No pain', 'pass', 'green', 'Pass'),
+                opt('Pain or pinching in ankle', 'painful', 'red', 'Painful'),
               ],
             },
             {
-              id: 'ankle_pf_pain',
-              name: 'Pain',
+              id: 'ankle_df_stability',
+              name: 'Stability',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
+                opt('Controlled movement', 'pass', 'green', 'Pass'),
+                opt('Foot collapses (excess pronation)', 'instability', 'red', 'Foot Instability'),
+              ],
+            },
+            {
+              id: 'ankle_df_alignment',
+              name: 'Alignment',
+              type: 'dropdown',
+              options: [
+                opt('Pelvis remains neutral', 'pass', 'green', 'Pass'),
+                opt('Knee deviates medially / laterally', 'tracking', 'red', 'Poor Knee Tracking'),
               ],
             },
           ],
@@ -386,88 +379,37 @@ export const mobilitySection: Section = {
     },
     {
       id: 'shoulder',
-      name: 'Shoulder Mobility',
+      name: 'Shoulder',
       tests: [
         {
-          id: 'shoulder_flexion',
-          name: 'Shoulder Flexion',
+          id: 'shoulder_scapulo',
+          name: 'Scapulo-Humeral Mobility',
           parameters: [
             {
-              id: 'shoulder_flexion_rom',
-              name: 'Range of Motion',
+              id: 'shoulder_mobility',
+              name: 'Mobility',
               type: 'dropdown',
               options: [
-                opt('Full overhead reach (Pass)', 'pass', 'pass'),
-                opt('Limited overhead (Restricted)', 'restricted', 'restricted'),
-                opt('Significant limitation (Severely Limited)', 'severe', 'painful'),
+                opt('Fists > one hand-length apart', 'pass', 'green', 'Pass'),
+                opt('Fists close but < one hand-length', 'moderate', 'red', 'Moderate Limitation'),
               ],
             },
             {
-              id: 'shoulder_flexion_pain',
+              id: 'shoulder_compensation',
+              name: 'Compensation',
+              type: 'dropdown',
+              options: [
+                opt('No rounding / twisting', 'pass', 'green', 'Pass'),
+                opt('Mild stiffness or compensation', 'limited', 'red', 'Limited Shoulder Mobility'),
+              ],
+            },
+            {
+              id: 'shoulder_pain',
               name: 'Pain',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain during movement (Painful)', 'pain', 'painful'),
-              ],
-            },
-            {
-              id: 'shoulder_flexion_compensation',
-              name: 'Compensatory Factor',
-              type: 'dropdown',
-              options: [
-                opt('No compensation (Pass)', 'pass', 'pass'),
-                opt('Rib flare or back arch (Compensated)', 'compensated', 'restricted'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'shoulder_internal_rotation',
-          name: 'Internal Rotation',
-          parameters: [
-            {
-              id: 'shoulder_ir_rom',
-              name: 'Range of Motion',
-              type: 'dropdown',
-              options: [
-                opt('Hand reaches opposite scapula (Pass)', 'pass', 'pass'),
-                opt('Hand reaches midback (Restricted)', 'restricted', 'restricted'),
-                opt('Hand below waist (Severely Limited)', 'severe', 'painful'),
-              ],
-            },
-            {
-              id: 'shoulder_ir_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'shoulder_external_rotation',
-          name: 'External Rotation',
-          parameters: [
-            {
-              id: 'shoulder_er_rom',
-              name: 'Range of Motion',
-              type: 'dropdown',
-              options: [
-                opt('90°+ rotation (Pass)', 'pass', 'pass'),
-                opt('70-90° rotation (Restricted)', 'restricted', 'restricted'),
-                opt('Less than 70° (Severely Limited)', 'severe', 'painful'),
-              ],
-            },
-            {
-              id: 'shoulder_er_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain present (Painful)', 'pain', 'painful'),
+                opt('Pain-free', 'pass', 'green', 'Pass'),
+                opt('Movement looks restricted / uncomfortable', 'painful', 'red', 'Painful'),
               ],
             },
           ],
@@ -476,77 +418,108 @@ export const mobilitySection: Section = {
     },
     {
       id: 'spine',
-      name: 'Spine Mobility',
+      name: 'Spine',
       tests: [
         {
-          id: 'spine_flexion',
-          name: 'Spinal Flexion',
+          id: 'spine_cat_cow',
+          name: 'Cat-Cow',
           parameters: [
             {
-              id: 'spine_flexion_rom',
-              name: 'Range of Motion',
+              id: 'cat_cow_tightness',
+              name: 'Tightness',
               type: 'dropdown',
               options: [
-                opt('Fingertips touch floor (Pass)', 'pass', 'pass'),
-                opt('Fingertips reach shins (Restricted)', 'restricted', 'restricted'),
-                opt('Limited flexion (Severely Limited)', 'severe', 'painful'),
+                opt('Long spine, compression', 'pass', 'green', 'Pass'),
+                opt('Neck driving most of movement', 'stiffness', 'red', 'Thoracic Stiffness'),
               ],
             },
             {
-              id: 'spine_flexion_pain',
-              name: 'Pain',
+              id: 'cat_cow_thoracic',
+              name: 'Thoracic Extension',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain during flexion (Painful)', 'pain', 'painful'),
+                opt('Smooth and visible extension coming from mid-upper back', 'pass', 'green', 'Pass'),
+                opt('Excess lumbar arching in cow', 'poor_ext', 'red', 'Poor Thoracic Extension'),
+              ],
+            },
+            {
+              id: 'cat_cow_dissociation',
+              name: 'Hip-Pelvis Dissociation',
+              type: 'dropdown',
+              options: [
+                opt('Pelvis tilts anterior/posterior smoothly independent of rib cage', 'pass', 'green', 'Pass'),
+                opt('Minimal pelvic movement', 'dissociation', 'red', 'Hip-Pelvis Dissociation'),
+              ],
+            },
+            {
+              id: 'cat_cow_motor_control',
+              name: 'Motor Control',
+              type: 'dropdown',
+              options: [
+                opt('No shaking, jerks, or sudden transitions', 'pass', 'green', 'Pass'),
+                opt('Jerky motion', 'poor_control', 'red', 'Poor Motor Control'),
+              ],
+            },
+            {
+              id: 'cat_cow_spinal_control',
+              name: 'Spinal Control',
+              type: 'dropdown',
+              options: [
+                opt('Even distribution of movement across cervical, thoracic, and lumbar spine', 'pass', 'green', 'Pass'),
+                opt('Breath holding observed', 'high_tone', 'red', 'High Tone / Poor Control'),
               ],
             },
           ],
         },
         {
-          id: 'spine_extension',
-          name: 'Spinal Extension',
+          id: 'spine_aslr',
+          name: 'Active Straight Leg Raise',
           parameters: [
             {
-              id: 'spine_extension_rom',
-              name: 'Range of Motion',
+              id: 'aslr_tightness_1',
+              name: 'Tightness (Moving Leg)',
               type: 'dropdown',
               options: [
-                opt('Comfortable extension (Pass)', 'pass', 'pass'),
-                opt('Limited extension (Restricted)', 'restricted', 'restricted'),
+                opt('Raised leg reaches 70–90° without compensation', 'pass', 'green', 'Pass'),
+                opt('Raised leg < 70° without compensation', 'restriction', 'red', 'ROM restriction'),
+                opt('Moving leg remains straight', 'straight', 'green', 'Pass'),
+                opt('Moving knee bends', 'hamstrings', 'red', 'Tight Hamstrings'),
               ],
             },
             {
-              id: 'spine_extension_pain',
-              name: 'Pain',
+              id: 'aslr_tightness_2',
+              name: 'Tightness (Grounded Leg)',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain during extension (Painful)', 'pain', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'spine_rotation',
-          name: 'Spinal Rotation',
-          parameters: [
-            {
-              id: 'spine_rotation_rom',
-              name: 'Range of Motion',
-              type: 'dropdown',
-              options: [
-                opt('Full rotation both sides (Pass)', 'pass', 'pass'),
-                opt('Asymmetric or limited (Restricted)', 'restricted', 'restricted'),
+                opt('Bottom leg stays grounded', 'pass', 'green', 'Pass'),
+                opt('Bottom heel lifts', 'flexors', 'red', 'Tight Hip Flexors (Grounded)'),
               ],
             },
             {
-              id: 'spine_rotation_pain',
-              name: 'Pain',
+              id: 'aslr_pelvic_pos',
+              name: 'Pelvic Position',
               type: 'dropdown',
               options: [
-                opt('No pain (Pass)', 'pass', 'pass'),
-                opt('Pain during rotation (Painful)', 'pain', 'painful'),
+                opt('Pelvis remains neutral and stable', 'pass', 'green', 'Pass'),
+                opt('Posterior pelvic tilt', 'dominant', 'red', 'Hamstrings Dominant'),
+              ],
+            },
+            {
+              id: 'aslr_arching',
+              name: 'Arching of Spine',
+              type: 'dropdown',
+              options: [
+                opt('Lumbar spine remains neutral', 'pass', 'green', 'Pass'),
+                opt('Lumbar extension (arching)', 'weak_core', 'red', 'Weak Deep Core'),
+              ],
+            },
+            {
+              id: 'aslr_hip_imbalance',
+              name: 'Hip Imbalance',
+              type: 'dropdown',
+              options: [
+                opt('Both sides show similar control and range', 'pass', 'green', 'Pass'),
+                opt('Lower leg rotates outward', 'imbalance', 'red', 'Hip Imbalance'),
               ],
             },
           ],
@@ -556,7 +529,6 @@ export const mobilitySection: Section = {
   ],
 };
 
-// ============ MOVEMENT ASSESSMENT ============
 export const movementSection: Section = {
   id: 'movement',
   name: 'Movement Assessment',
@@ -564,145 +536,55 @@ export const movementSection: Section = {
   icon: '🏃',
   subsections: [
     {
-      id: 'ohs_front',
-      name: 'Overhead Squat – Front View',
+      id: 'ohs',
+      name: 'Overhead Squat',
       tests: [
         {
-          id: 'ohs_feet',
-          name: 'Feet Position',
+          id: 'ohs_front',
+          name: 'OHS – Front View',
           parameters: [
             {
-              id: 'ohs_feet_alignment',
+              id: 'ohs_alignment',
               name: 'Alignment',
               type: 'dropdown',
               options: [
-                opt('Feet straight (Pass)', 'pass', 'pass'),
-                opt('Slight turn out (Restricted)', 'restricted', 'restricted'),
-                opt('Significant turn out (Issue)', 'significant', 'painful'),
+                opt('Good Alignment', 'pass', 'green', 'Pass'),
+                opt('Feet turn out', 'feet_out', 'red', 'Tight Calves / Hip Rotators'),
+                opt('Knees move inward (valgus)', 'valgus', 'red', 'Hip Instability / Weak Glutes'),
+                opt('Knees move outward (varus)', 'varus', 'red', 'Tight Hip External Rotators'),
               ],
             },
           ],
         },
         {
-          id: 'ohs_knees_front',
-          name: 'Knee Tracking',
+          id: 'ohs_side',
+          name: 'OHS – Side View',
           parameters: [
             {
-              id: 'ohs_knees_valgus',
-              name: 'Valgus',
+              id: 'ohs_mobility_comp',
+              name: 'Mobility / Compensation',
               type: 'dropdown',
               options: [
-                opt('Knees track over toes (Pass)', 'pass', 'pass'),
-                opt('Slight valgus (Restricted)', 'restricted', 'restricted'),
-                opt('Significant valgus collapse (Issue)', 'significant', 'painful'),
+                opt('Good Mobility', 'pass', 'green', 'Pass'),
+                opt('Excessive forward lean', 'lean', 'red', 'Tight Hip Flexors / Weak Core'),
+                opt('Arms fall forward', 'arms', 'red', 'Shoulder Mobility Restriction'),
+                opt('Heels lift off', 'heels', 'red', 'Poor Ankle Dorsiflexion'),
               ],
             },
           ],
         },
         {
-          id: 'ohs_weight',
-          name: 'Weight Distribution',
+          id: 'ohs_back',
+          name: 'OHS – Back View',
           parameters: [
             {
-              id: 'ohs_weight_shift',
-              name: 'Shift',
+              id: 'ohs_stability',
+              name: 'Stability',
               type: 'dropdown',
               options: [
-                opt('Even weight distribution (Pass)', 'pass', 'pass'),
-                opt('Slight shift to one side (Restricted)', 'restricted', 'restricted'),
-                opt('Significant shift (Issue)', 'significant', 'painful'),
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'ohs_side',
-      name: 'Overhead Squat – Side View',
-      tests: [
-        {
-          id: 'ohs_torso',
-          name: 'Torso Position',
-          parameters: [
-            {
-              id: 'ohs_forward_lean',
-              name: 'Forward Lean',
-              type: 'dropdown',
-              options: [
-                opt('Torso upright (Pass)', 'pass', 'pass'),
-                opt('Moderate forward lean (Restricted)', 'restricted', 'restricted'),
-                opt('Excessive forward lean (Issue)', 'excessive', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'ohs_arms',
-          name: 'Arm Position',
-          parameters: [
-            {
-              id: 'ohs_arms_fall',
-              name: 'Arm Drift',
-              type: 'dropdown',
-              options: [
-                opt('Arms stay overhead (Pass)', 'pass', 'pass'),
-                opt('Arms drift forward (Restricted)', 'restricted', 'restricted'),
-                opt('Arms fall significantly (Issue)', 'significant', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'ohs_heels',
-          name: 'Heel Position',
-          parameters: [
-            {
-              id: 'ohs_heels_rise',
-              name: 'Heel Rise',
-              type: 'dropdown',
-              options: [
-                opt('Heels stay down (Pass)', 'pass', 'pass'),
-                opt('Slight heel rise (Restricted)', 'restricted', 'restricted'),
-                opt('Heels come off floor (Issue)', 'significant', 'painful'),
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 'ohs_back',
-      name: 'Overhead Squat – Back View',
-      tests: [
-        {
-          id: 'ohs_symmetry',
-          name: 'Symmetry',
-          parameters: [
-            {
-              id: 'ohs_asymmetric_shift',
-              name: 'Weight Shift',
-              type: 'dropdown',
-              options: [
-                opt('Symmetric descent (Pass)', 'pass', 'pass'),
-                opt('Slight asymmetry (Restricted)', 'restricted', 'restricted'),
-                opt('Significant asymmetry (Issue)', 'significant', 'painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'ohs_heels_back',
-          name: 'Heel Rise (Back View)',
-          parameters: [
-            {
-              id: 'ohs_heel_rise_back',
-              name: 'Heel Rise',
-              type: 'dropdown',
-              options: [
-                opt('Both heels grounded (Pass)', 'pass', 'pass'),
-                opt('One heel rises (Restricted)', 'restricted', 'restricted'),
-                opt('Both heels rise (Issue)', 'significant', 'painful'),
+                opt('Good Stability', 'pass', 'green', 'Pass'),
+                opt('Going deep but tilted', 'tilted', 'red', 'Asymmetry / Mobility Restriction'),
+                opt('Not deep enough', 'shallow', 'red', 'Mobility Restricted'),
               ],
             },
           ],
@@ -712,118 +594,301 @@ export const movementSection: Section = {
   ],
 };
 
-// ============ STRENGTH TESTS ============
 export const strengthSection: Section = {
   id: 'strength',
   name: 'Strength Tests',
   component: 'Strength',
   icon: '💪',
-  tests: [
+  subsections: [
     {
-      id: 'pushups',
-      name: 'Push-ups',
-      parameters: [
+      id: 'upper_body_male',
+      name: 'Upper Body (Male)',
+      tests: [
         {
-          id: 'pushups_reps',
-          name: 'Repetitions',
-          type: 'number',
-          unit: 'reps',
-          benchmarks: { beginner: 10, intermediate: 25, advanced: 40 },
+          id: 'pushups_male',
+          name: 'Push-ups (At a go)',
+          parameters: [
+            {
+              id: 'pushups_male_reps',
+              name: 'Repetitions',
+              type: 'dropdown',
+              options: [
+                opt('10–20 reps', '10-20', 'red', 'Baseline Endurance'),
+                opt('25–35 reps', '25-35', 'yellow', 'Functional Endurance'),
+                opt('40–60+ reps', '40-60+', 'green', 'High Muscular Endurance'),
+              ],
+            },
+          ],
         },
       ],
     },
     {
-      id: 'plank',
-      name: 'Plank Hold',
-      parameters: [
+      id: 'upper_body_female',
+      name: 'Upper Body (Female)',
+      tests: [
         {
-          id: 'plank_time',
-          name: 'Duration',
-          type: 'number',
-          unit: 'seconds',
-          benchmarks: { beginner: 30, intermediate: 60, advanced: 120 },
+          id: 'pushups_female',
+          name: 'Push-ups (At a go)',
+          parameters: [
+            {
+              id: 'pushups_female_reps',
+              name: 'Repetitions',
+              type: 'dropdown',
+              options: [
+                opt('5–15 reps', '5-15', 'red', 'Baseline Endurance'),
+                opt('20–30 reps', '20-30', 'yellow', 'Functional Endurance'),
+                opt('35–50+ reps', '35-50+', 'green', 'High Muscular Endurance'),
+              ],
+            },
+          ],
         },
       ],
     },
     {
-      id: 'squats',
-      name: 'Bodyweight Squats',
-      parameters: [
+      id: 'core_male',
+      name: 'Core (Male)',
+      tests: [
         {
-          id: 'squats_reps',
-          name: 'Repetitions',
-          type: 'number',
-          unit: 'reps',
-          benchmarks: { beginner: 15, intermediate: 30, advanced: 50 },
+          id: 'plank_male',
+          name: 'Plank Hold',
+          parameters: [
+            {
+              id: 'plank_male_time',
+              name: 'Duration',
+              type: 'dropdown',
+              options: [
+                opt('0–30 secs', '0-30', 'red', 'Inactive core endurance'),
+                opt('30–60 sec', '30-60', 'yellow', 'Basic Endurance'),
+                opt('60–120 sec', '60-120', 'green', 'Functional Stability'),
+                opt('120–180+ sec', '120-180+', 'green', 'High Endurance'),
+              ],
+            },
+          ],
         },
       ],
     },
     {
-      id: 'wall_sit',
-      name: 'Wall Sit',
-      parameters: [
+      id: 'core_female',
+      name: 'Core (Female)',
+      tests: [
         {
-          id: 'wall_sit_time',
-          name: 'Duration',
-          type: 'number',
-          unit: 'seconds',
-          benchmarks: { beginner: 30, intermediate: 60, advanced: 90 },
+          id: 'plank_female',
+          name: 'Plank Hold',
+          parameters: [
+            {
+              id: 'plank_female_time',
+              name: 'Duration',
+              type: 'dropdown',
+              options: [
+                opt('0–30 sec', '0-30', 'red', 'Inactive core endurance'),
+                opt('30–45 sec', '30-45', 'yellow', 'Basic Endurance'),
+                opt('45–90 sec', '45-90', 'green', 'Functional Stability'),
+                opt('90–150+ sec', '90-150+', 'green', 'High Endurance'),
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'lower_body_male_squats',
+      name: 'Lower Body (Male)',
+      tests: [
+        {
+          id: 'squats_male',
+          name: 'Bodyweight Squats - 1 min',
+          parameters: [
+            {
+              id: 'squats_male_reps',
+              name: 'Repetitions',
+              type: 'dropdown',
+              options: [
+                opt('25–30 reps', '25-30', 'red', 'Beginner'),
+                opt('30–40 reps', '30-40', 'yellow', 'Intermediate'),
+                opt('40–50+ reps', '40-50+', 'green', 'Advanced'),
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'lower_body_female_squats',
+      name: 'Lower Body (Female)',
+      tests: [
+        {
+          id: 'squats_female',
+          name: 'Bodyweight Squats - 1 min',
+          parameters: [
+            {
+              id: 'squats_female_reps',
+              name: 'Repetitions',
+              type: 'dropdown',
+              options: [
+                opt('0–25 reps', '0-25', 'red', 'Beginner'),
+                opt('25–35 reps', '25-35', 'yellow', 'Intermediate'),
+                opt('35–45+ reps', '35-45+', 'green', 'Advanced'),
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'lower_body_male_wallsit',
+      name: 'Lower Body (Male)',
+      tests: [
+        {
+          id: 'wallsit_male',
+          name: 'Wall Sit Hold',
+          parameters: [
+            {
+              id: 'wallsit_male_time',
+              name: 'Duration',
+              type: 'dropdown',
+              options: [
+                opt('0–45 sec', '0-45', 'red', 'Beginner'),
+                opt('45–90 sec', '45-90', 'yellow', 'Intermediate'),
+                opt('90–150+ sec', '90-150+', 'green', 'Advanced'),
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'lower_body_female_wallsit',
+      name: 'Lower Body (Female)',
+      tests: [
+        {
+          id: 'wallsit_female',
+          name: 'Wall Sit Hold',
+          parameters: [
+            {
+              id: 'wallsit_female_time',
+              name: 'Duration',
+              type: 'dropdown',
+              options: [
+                opt('0–30 sec', '0-30', 'red', 'Beginner'),
+                opt('30–60 sec', '30-60', 'yellow', 'Intermediate'),
+                opt('60–120+ sec', '60-120+', 'green', 'Advanced'),
+              ],
+            },
+          ],
         },
       ],
     },
   ],
 };
 
-// ============ ENDURANCE TESTS ============
 export const enduranceSection: Section = {
   id: 'endurance',
   name: 'Endurance Tests',
   component: 'Endurance',
   icon: '❤️',
-  tests: [
+  subsections: [
     {
-      id: 'breath_hold',
-      name: 'Breath Hold Test',
-      parameters: [
+      id: 'lung_capacity_male',
+      name: 'Lung Capacity (Male)',
+      tests: [
         {
-          id: 'breath_hold_time',
-          name: 'Duration',
-          type: 'number',
-          unit: 'seconds',
-          benchmarks: { beginner: 20, intermediate: 40, advanced: 60 },
+          id: 'bht_male',
+          name: 'Breath-Hold (BHT)',
+          parameters: [
+            {
+              id: 'bht_male_time',
+              name: 'Duration',
+              type: 'dropdown',
+              options: [
+                opt('< 25 sec', '< 25', 'red', 'Low'),
+                opt('25–40 sec', '25-40', 'yellow', 'Average'),
+                opt('40–60 sec', '40-60', 'green', 'Good'),
+                opt('60+ sec', '60+', 'green', 'Very Good'),
+              ],
+            },
+          ],
         },
       ],
     },
     {
-      id: 'counting_breath',
-      name: 'Counting Breath Test',
-      parameters: [
+      id: 'lung_capacity_female',
+      name: 'Lung Capacity (Female)',
+      tests: [
         {
-          id: 'counting_breath_rate',
-          name: 'Breathing Rate',
-          type: 'number',
-          unit: 'breaths/min',
-          benchmarks: { beginner: 20, intermediate: 14, advanced: 8 },
+          id: 'bht_female',
+          name: 'Breath-Hold (BHT)',
+          parameters: [
+            {
+              id: 'bht_female_time',
+              name: 'Duration',
+              type: 'dropdown',
+              options: [
+                opt('< 20 sec', '< 20', 'red', 'Low'),
+                opt('20–35 sec', '20-35', 'yellow', 'Average'),
+                opt('35–50 sec', '35-50', 'green', 'Good'),
+                opt('50+ sec', '50+', 'green', 'Very Good'),
+              ],
+            },
+          ],
         },
       ],
     },
     {
-      id: 'sit_to_stand',
-      name: 'Sit-to-Stand (30 sec)',
-      parameters: [
+      id: 'breath_control',
+      name: 'Breath Control',
+      tests: [
         {
-          id: 'sit_to_stand_reps',
-          name: 'Repetitions',
-          type: 'number',
-          unit: 'reps',
-          benchmarks: { beginner: 10, intermediate: 18, advanced: 25 },
+          id: 'counting_test',
+          name: 'Counting Test',
+          parameters: [
+            {
+              id: 'counting_test_score',
+              name: 'Score',
+              type: 'dropdown',
+              options: [
+                opt('< 20', '< 20', 'red', 'Poor Control'),
+                opt('20–40', '20-40', 'yellow', 'Average'),
+                opt('40–60', '40-60', 'green', 'Good'),
+                opt('> 60', '> 60', 'green', 'Excellent'),
+              ],
+            },
+          ],
         },
+      ],
+    },
+    {
+      id: 'sit_to_stand_male',
+      name: 'Sit-to-Stand (Male)',
+      tests: [
+        { id: 'sts_m_8_14', name: '30-sec STS', minAge: 0, maxAge: 14, parameters: [{ id: 'p_sts_m_8_14', name: 'Repetitions', type: 'dropdown', options: [opt('< 15 reps', '< 15', 'red', 'Inadequate'), opt('15+ reps', '15+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_15_19', name: '30-sec STS', minAge: 15, maxAge: 19, parameters: [{ id: 'p_sts_m_15_19', name: 'Repetitions', type: 'dropdown', options: [opt('< 18 reps', '< 18', 'red', 'Inadequate'), opt('18+ reps', '18+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_20_29', name: '30-sec STS', minAge: 20, maxAge: 29, parameters: [{ id: 'p_sts_m_20_29', name: 'Repetitions', type: 'dropdown', options: [opt('< 14 reps', '< 14', 'red', 'Inadequate'), opt('14+ reps', '14+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_30_39', name: '30-sec STS', minAge: 30, maxAge: 39, parameters: [{ id: 'p_sts_m_30_39', name: 'Repetitions', type: 'dropdown', options: [opt('< 14 reps', '< 14', 'red', 'Inadequate'), opt('14+ reps', '14+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_40_49', name: '30-sec STS', minAge: 40, maxAge: 49, parameters: [{ id: 'p_sts_m_40_49', name: 'Repetitions', type: 'dropdown', options: [opt('< 13 reps', '< 13', 'red', 'Inadequate'), opt('13+ reps', '13+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_50_59', name: '30-sec STS', minAge: 50, maxAge: 59, parameters: [{ id: 'p_sts_m_50_59', name: 'Repetitions', type: 'dropdown', options: [opt('< 12 reps', '< 12', 'red', 'Inadequate'), opt('12+ reps', '12+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_60_69', name: '30-sec STS', minAge: 60, maxAge: 69, parameters: [{ id: 'p_sts_m_60_69', name: 'Repetitions', type: 'dropdown', options: [opt('< 11 reps', '< 11', 'red', 'Inadequate'), opt('11+ reps', '11+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_70_79', name: '30-sec STS', minAge: 70, maxAge: 79, parameters: [{ id: 'p_sts_m_70_79', name: 'Repetitions', type: 'dropdown', options: [opt('< 10 reps', '< 10', 'red', 'Inadequate'), opt('10+ reps', '10+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_80_plus', name: '30-sec STS', minAge: 80, maxAge: 150, parameters: [{ id: 'p_sts_m_80_plus', name: 'Repetitions', type: 'dropdown', options: [opt('< 8 reps', '< 8', 'red', 'Inadequate'), opt('8+ reps', '8+', 'green', 'Adequate')] }] },
+      ],
+    },
+    {
+      id: 'sit_to_stand_female',
+      name: 'Sit-to-Stand (Female)',
+      tests: [
+        { id: 'sts_f_7_12', name: '30-sec STS', minAge: 0, maxAge: 12, parameters: [{ id: 'p_sts_f_7_12', name: 'Repetitions', type: 'dropdown', options: [opt('< 13 reps', '< 13', 'red', 'Inadequate'), opt('13+ reps', '13+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_13_19', name: '30-sec STS', minAge: 13, maxAge: 19, parameters: [{ id: 'p_sts_f_13_19', name: 'Repetitions', type: 'dropdown', options: [opt('< 16 reps', '< 16', 'red', 'Inadequate'), opt('16+ reps', '16+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_20_29', name: '30-sec STS', minAge: 20, maxAge: 29, parameters: [{ id: 'p_sts_f_20_29', name: 'Repetitions', type: 'dropdown', options: [opt('< 12 reps', '< 12', 'red', 'Inadequate'), opt('12+ reps', '12+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_30_39', name: '30-sec STS', minAge: 30, maxAge: 39, parameters: [{ id: 'p_sts_f_30_39', name: 'Repetitions', type: 'dropdown', options: [opt('< 12 reps', '< 12', 'red', 'Inadequate'), opt('12+ reps', '12+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_40_49', name: '30-sec STS', minAge: 40, maxAge: 49, parameters: [{ id: 'p_sts_f_40_49', name: 'Repetitions', type: 'dropdown', options: [opt('< 11 reps', '< 11', 'red', 'Inadequate'), opt('11+ reps', '11+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_50_59', name: '30-sec STS', minAge: 50, maxAge: 59, parameters: [{ id: 'p_sts_f_50_59', name: 'Repetitions', type: 'dropdown', options: [opt('< 10 reps', '< 10', 'red', 'Inadequate'), opt('10+ reps', '10+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_60_69', name: '30-sec STS', minAge: 60, maxAge: 69, parameters: [{ id: 'p_sts_f_60_69', name: 'Repetitions', type: 'dropdown', options: [opt('< 9 reps', '< 9', 'red', 'Inadequate'), opt('9+ reps', '9+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_70_79', name: '30-sec STS', minAge: 70, maxAge: 79, parameters: [{ id: 'p_sts_f_70_79', name: 'Repetitions', type: 'dropdown', options: [opt('< 8 reps', '< 8', 'red', 'Inadequate'), opt('8+ reps', '8+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_80_plus', name: '30-sec STS', minAge: 80, maxAge: 150, parameters: [{ id: 'p_sts_f_80_plus', name: 'Repetitions', type: 'dropdown', options: [opt('< 7 reps', '< 7', 'red', 'Inadequate'), opt('7+ reps', '7+', 'green', 'Adequate')] }] },
       ],
     },
   ],
 };
 
-// ============ BALANCE TEST ============
 export const balanceSection: Section = {
   id: 'balance',
   name: 'Balance – Single Leg Stance Test',
@@ -839,10 +904,10 @@ export const balanceSection: Section = {
           name: 'Quality',
           type: 'dropdown',
           options: [
-            { label: 'Good Control – Eyes Open', value: 'good_control', status: 'pass', severity: 'green', description: 'Stable, minimal sway' },
-            { label: 'Minor Wobbles', value: 'minor_wobbles', status: 'restricted', severity: 'yellow', description: 'Some sway visible' },
-            { label: 'Multiple Compensations', value: 'multiple_comp', status: 'restricted', severity: 'yellow', description: 'Clear movement errors' },
-            { label: 'Loss of Balance', value: 'loss_balance', status: 'painful', severity: 'red', description: 'Cannot maintain' },
+            opt('Good Control – Eyes Open', 'good_control', 'green', 'Pass'),
+            opt('Minor Wobbles', 'minor_wobbles', 'yellow', 'Restricted'),
+            opt('Multiple Compensations', 'multiple_comp', 'yellow', 'Restricted'),
+            opt('Loss of Balance', 'loss_balance', 'red', 'Painful'),
           ],
         },
         {
@@ -862,10 +927,10 @@ export const balanceSection: Section = {
           name: 'Quality',
           type: 'dropdown',
           options: [
-            { label: 'Good Control – Eyes Open', value: 'good_control', status: 'pass', severity: 'green', description: 'Stable, minimal sway' },
-            { label: 'Minor Wobbles', value: 'minor_wobbles', status: 'restricted', severity: 'yellow', description: 'Some sway visible' },
-            { label: 'Multiple Compensations', value: 'multiple_comp', status: 'restricted', severity: 'yellow', description: 'Clear movement errors' },
-            { label: 'Loss of Balance', value: 'loss_balance', status: 'painful', severity: 'red', description: 'Cannot maintain' },
+            opt('Good Control – Eyes Open', 'good_control', 'green', 'Pass'),
+            opt('Minor Wobbles', 'minor_wobbles', 'yellow', 'Restricted'),
+            opt('Multiple Compensations', 'multiple_comp', 'yellow', 'Restricted'),
+            opt('Loss of Balance', 'loss_balance', 'red', 'Painful'),
           ],
         },
         {
@@ -880,7 +945,6 @@ export const balanceSection: Section = {
 };
 
 // ============ AMRAP CONDITIONING ============
-
 export interface AmrapExercise {
   category: string;
   primaryMovement: string;
@@ -942,7 +1006,7 @@ export interface AmrapScoringParam {
   id: string;
   name: string;
   description: string;
-  options: { label: string; value: string; score: number; status: StatusFlag }[];
+  options: { label: string; value: string; score: number; severity: SeverityLevel; outputFlag: string }[];
 }
 
 export const amrapScoringGuide: AmrapScoringParam[] = [
@@ -951,9 +1015,9 @@ export const amrapScoringGuide: AmrapScoringParam[] = [
     name: 'Rounds Completed',
     description: 'Total full rounds in 10 min',
     options: [
-      { label: '1 round', value: '1', score: 1, status: 'painful' },
-      { label: '2-3 rounds', value: '2-3', score: 2, status: 'restricted' },
-      { label: '3+ rounds', value: '3+', score: 3, status: 'pass' },
+      { label: '1 round', value: '1', score: 1, severity: 'red', outputFlag: 'Painful' },
+      { label: '2-3 rounds', value: '2-3', score: 2, severity: 'yellow', outputFlag: 'Restricted' },
+      { label: '3+ rounds', value: '3+', score: 3, severity: 'green', outputFlag: 'Pass' },
     ],
   },
   {
@@ -961,9 +1025,9 @@ export const amrapScoringGuide: AmrapScoringParam[] = [
     name: 'HR Response',
     description: 'Normal / Elevated / Excessive',
     options: [
-      { label: 'Normal', value: 'normal', score: 3, status: 'pass' },
-      { label: 'Elevated', value: 'elevated', score: 2, status: 'restricted' },
-      { label: 'Excessive', value: 'excessive', score: 1, status: 'painful' },
+      { label: 'Normal', value: 'normal', score: 3, severity: 'green', outputFlag: 'Pass' },
+      { label: 'Elevated', value: 'elevated', score: 2, severity: 'yellow', outputFlag: 'Restricted' },
+      { label: 'Excessive', value: 'excessive', score: 1, severity: 'red', outputFlag: 'Painful' },
     ],
   },
   {
@@ -971,9 +1035,9 @@ export const amrapScoringGuide: AmrapScoringParam[] = [
     name: 'Movement Quality',
     description: 'Good / Compensated / Poor',
     options: [
-      { label: 'Good', value: 'good', score: 3, status: 'pass' },
-      { label: 'Compensated', value: 'compensated', score: 2, status: 'restricted' },
-      { label: 'Poor', value: 'poor', score: 1, status: 'painful' },
+      { label: 'Good', value: 'good', score: 3, severity: 'green', outputFlag: 'Pass' },
+      { label: 'Compensated', value: 'compensated', score: 2, severity: 'yellow', outputFlag: 'Restricted' },
+      { label: 'Poor', value: 'poor', score: 1, severity: 'red', outputFlag: 'Painful' },
     ],
   },
   {
@@ -981,9 +1045,9 @@ export const amrapScoringGuide: AmrapScoringParam[] = [
     name: 'Pain Report',
     description: 'Severe / Tolerable / No',
     options: [
-      { label: 'No Pain', value: 'no', score: 3, status: 'pass' },
-      { label: 'Tolerable', value: 'tolerable', score: 2, status: 'restricted' },
-      { label: 'Severe', value: 'severe', score: 1, status: 'painful' },
+      { label: 'No Pain', value: 'no', score: 3, severity: 'green', outputFlag: 'Pass' },
+      { label: 'Tolerable', value: 'tolerable', score: 2, severity: 'yellow', outputFlag: 'Restricted' },
+      { label: 'Severe', value: 'severe', score: 1, severity: 'red', outputFlag: 'Painful' },
     ],
   },
 ];
@@ -1003,9 +1067,9 @@ export const amrapSection: Section = {
           name: 'Rounds Completed',
           type: 'dropdown',
           options: [
-            opt('1 round (Score: 1)', '1', 'painful'),
-            opt('2-3 rounds (Score: 2)', '2-3', 'restricted'),
-            opt('3+ rounds (Score: 3)', '3+', 'pass'),
+            opt('1 round (Score: 1)', '1', 'red', 'Poor'),
+            opt('2-3 rounds (Score: 2)', '2-3', 'yellow', 'Average'),
+            opt('3+ rounds (Score: 3)', '3+', 'green', 'Good'),
           ],
         },
         {
@@ -1013,9 +1077,9 @@ export const amrapSection: Section = {
           name: 'HR Response',
           type: 'dropdown',
           options: [
-            opt('Normal (Score: 3)', 'normal', 'pass'),
-            opt('Elevated (Score: 2)', 'elevated', 'restricted'),
-            opt('Excessive (Score: 1)', 'excessive', 'painful'),
+            opt('Normal (Score: 3)', 'normal', 'green', 'Good'),
+            opt('Elevated (Score: 2)', 'elevated', 'yellow', 'Average'),
+            opt('Excessive (Score: 1)', 'excessive', 'red', 'Poor'),
           ],
         },
         {
@@ -1023,9 +1087,9 @@ export const amrapSection: Section = {
           name: 'Movement Quality',
           type: 'dropdown',
           options: [
-            opt('Good (Score: 3)', 'good', 'pass'),
-            opt('Compensated (Score: 2)', 'compensated', 'restricted'),
-            opt('Poor (Score: 1)', 'poor', 'painful'),
+            opt('Good (Score: 3)', 'good', 'green', 'Good'),
+            opt('Compensated (Score: 2)', 'compensated', 'yellow', 'Average'),
+            opt('Poor (Score: 1)', 'poor', 'red', 'Poor'),
           ],
         },
         {
@@ -1033,9 +1097,9 @@ export const amrapSection: Section = {
           name: 'Pain Report',
           type: 'dropdown',
           options: [
-            opt('No Pain (Score: 3)', 'no', 'pass'),
-            opt('Tolerable (Score: 2)', 'tolerable', 'restricted'),
-            opt('Severe (Score: 1)', 'severe', 'painful'),
+            opt('No Pain (Score: 3)', 'no', 'green', 'Good'),
+            opt('Tolerable (Score: 2)', 'tolerable', 'yellow', 'Average'),
+            opt('Severe (Score: 1)', 'severe', 'red', 'Poor'),
           ],
         },
       ],
@@ -1055,62 +1119,46 @@ export const allSections: Section[] = [
 
 // ===== Helper functions =====
 
-export function getParameterStatus(param: Parameter, value: string): StatusFlag {
-  if (!param.options) return 'pass';
-  const option = param.options.find(o => o.value === value);
-  return option?.status ?? 'pass';
+export function getParameterOption(param: Parameter, value: string): BenchmarkOption | undefined {
+  if (!param.options) return undefined;
+  return param.options.find(o => o.value === value);
 }
 
 export function getParameterSeverity(param: Parameter, value: string): SeverityLevel {
-  if (!param.options) return 'green';
-  const option = param.options.find(o => o.value === value);
+  const option = getParameterOption(param, value);
   return option?.severity ?? 'green';
 }
 
-export function getStrengthLevel(value: number, benchmarks: { beginner: number; intermediate: number; advanced: number }, invertScale = false): string {
+export function getStrengthLevelInfo(value: number, param: Parameter, invertScale = false): { level: string, cssClass: string } {
+  const b = param.benchmarks;
+  if (!b) return { level: 'Beginner', cssClass: 'bg-[hsl(var(--status-issue))]' };
+  
+  const labels = b.labels || ['Beginner', 'Intermediate', 'Advanced'];
+  
   if (invertScale) {
-    if (value <= benchmarks.advanced) return 'Advanced';
-    if (value <= benchmarks.intermediate) return 'Intermediate';
-    return 'Beginner';
+    if (value <= b.advanced) return { level: labels[2], cssClass: 'bg-[hsl(var(--status-pass))] text-white' };
+    if (value <= b.intermediate) return { level: labels[1], cssClass: 'bg-[hsl(var(--status-restricted))] text-white' };
+    return { level: labels[0], cssClass: 'bg-[hsl(var(--status-issue))] text-white' };
   }
-  if (value >= benchmarks.advanced) return 'Advanced';
-  if (value >= benchmarks.intermediate) return 'Intermediate';
-  return 'Beginner';
+  
+  if (value >= b.advanced) return { level: labels[2], cssClass: 'bg-[hsl(var(--status-pass))] text-white' };
+  else if (value >= b.intermediate) return { level: labels[1], cssClass: 'bg-[hsl(var(--status-restricted))] text-white' };
+  else if (value >= b.beginner) return { level: labels[0], cssClass: 'bg-[hsl(var(--status-issue))] text-white' };
+  return { level: 'Below Baseline', cssClass: 'bg-[hsl(var(--status-issue))] text-white' };
 }
 
-export function getStrengthStatus(level: string): StatusFlag {
-  if (level === 'Advanced' || level === 'Intermediate') return 'pass';
-  return 'restricted';
-}
-
-// Get all parameters from a section flattened
-export function getAllParameters(section: Section): { param: Parameter; testName: string; subName?: string }[] {
-  const result: { param: Parameter; testName: string; subName?: string }[] = [];
-
-  if (section.subsections) {
-    for (const sub of section.subsections) {
-      for (const test of sub.tests) {
-        for (const param of test.parameters) {
-          result.push({ param, testName: test.name, subName: sub.name });
-        }
-      }
-    }
-  }
-
-  if (section.tests) {
-    for (const test of section.tests) {
-      for (const param of test.parameters) {
-        result.push({ param, testName: test.name });
-      }
-    }
-  }
-
-  return result;
+export function calculateAge(dobStr?: string): number | undefined {
+  if (!dobStr) return undefined;
+  const dob = new Date(dobStr);
+  if (isNaN(dob.getTime())) return undefined;
+  const ageDifMs = Date.now() - dob.getTime();
+  const ageDate = new Date(ageDifMs);
+  return Math.abs(ageDate.getUTCFullYear() - 1970);
 }
 
 // Section result: pass / limitation / red_flag
-export function getSectionStatus(section: Section, dropdownResults: Record<string, string>, numericResults: Record<string, number>): 'pass' | 'limitation' | 'red_flag' {
-  const params = getAllParameters(section);
+export function getSectionStatus(section: Section, dropdownResults: Record<string, string>, numericResults: Record<string, number>, gender?: string, age?: number): 'pass' | 'limitation' | 'red_flag' {
+  const params = getAllParameters(section, gender, age);
   let hasRestricted = false;
   let hasPainful = false;
 
@@ -1118,16 +1166,21 @@ export function getSectionStatus(section: Section, dropdownResults: Record<strin
     if (param.type === 'dropdown') {
       const val = dropdownResults[param.id];
       if (val) {
-        const status = getParameterStatus(param, val);
-        if (status === 'painful') hasPainful = true;
-        else if (status === 'restricted') hasRestricted = true;
+        const option = getParameterOption(param, val);
+        if (option) {
+          if (option.severity === 'red') hasPainful = true;
+          else if (option.severity === 'yellow') hasRestricted = true;
+        }
       }
     } else if (param.type === 'number' && param.benchmarks) {
       const val = numericResults[param.id];
       if (val !== undefined) {
         const invertScale = param.id === 'counting_breath_rate';
-        const level = getStrengthLevel(val, param.benchmarks, invertScale);
-        if (level === 'Beginner') hasRestricted = true;
+        if (invertScale) {
+           if (val > param.benchmarks.intermediate) hasRestricted = true;
+        } else {
+           if (val < param.benchmarks.intermediate) hasRestricted = true;
+        }
       }
     }
   }
@@ -1137,12 +1190,45 @@ export function getSectionStatus(section: Section, dropdownResults: Record<strin
   return 'pass';
 }
 
-// Section score for client report
-export function getSectionScore(sectionId: string, results: Record<string, string>, numericResults: Record<string, number>): string {
+export function isVisible(target: { id: string; minAge?: number; maxAge?: number }, gender?: string, age?: number): boolean {
+  if (target.minAge !== undefined && age !== undefined && age < target.minAge) return false;
+  if (target.maxAge !== undefined && age !== undefined && age > target.maxAge) return false;
+
+  if (!gender) return true;
+  const g = gender.toLowerCase();
+  if (target.id.includes('_male') && g === 'female') return false;
+  if (target.id.includes('_female') && g === 'male') return false;
+  return true;
+}
+
+export function getAllParameters(section: Section, gender?: string, age?: number): { param: Parameter; testName: string; subName?: string }[] {
+  const result: { param: Parameter; testName: string; subName?: string }[] = [];
+  if (section.subsections) {
+    for (const sub of section.subsections) {
+      if (!isVisible({ id: sub.id }, gender, age)) continue;
+      for (const test of sub.tests) {
+        if (!isVisible({ id: test.id, minAge: test.minAge, maxAge: test.maxAge }, gender, age)) continue;
+        for (const param of test.parameters) {
+          result.push({ param, testName: test.name, subName: sub.name });
+        }
+      }
+    }
+  }
+  if (section.tests) {
+    for (const test of section.tests) {
+      if (!isVisible({ id: test.id, minAge: test.minAge, maxAge: test.maxAge }, gender, age)) continue;
+      for (const param of test.parameters) {
+        result.push({ param, testName: test.name });
+      }
+    }
+  }
+  return result;
+}
+
+export function getSectionScore(sectionId: string, results: Record<string, string>, numericResults: Record<string, number>, gender?: string, age?: number): string {
   const section = allSections.find(s => s.id === sectionId);
   if (!section) return 'N/A';
-
-  const params = getAllParameters(section);
+  const params = getAllParameters(section, gender, age);
   let total = 0;
   let score = 0;
 
@@ -1151,23 +1237,29 @@ export function getSectionScore(sectionId: string, results: Record<string, strin
       total++;
       const val = results[param.id];
       if (val) {
-        const status = getParameterStatus(param, val);
-        if (status === 'pass') score += 1;
-        else if (status === 'restricted') score += 0.5;
+        const option = getParameterOption(param, val);
+        if (option) {
+          if (option.severity === 'green') score += 1;
+          else if (option.severity === 'yellow') score += 0.5;
+        }
       }
     } else if (param.type === 'number' && param.benchmarks) {
       total++;
       const val = numericResults[param.id];
       if (val !== undefined) {
         const invertScale = param.id === 'counting_breath_rate';
-        const level = getStrengthLevel(val, param.benchmarks, invertScale);
-        if (level === 'Advanced') score += 1;
-        else if (level === 'Intermediate') score += 0.7;
-        else score += 0.3;
+        if (invertScale) {
+          if (val <= param.benchmarks.advanced) score += 1;
+          else if (val <= param.benchmarks.intermediate) score += 0.7;
+          else score += 0.3;
+        } else {
+          if (val >= param.benchmarks.advanced) score += 1;
+          else if (val >= param.benchmarks.intermediate) score += 0.7;
+          else score += 0.3;
+        }
       }
     }
   }
-
   if (total === 0) return 'N/A';
   const pct = (score / total) * 100;
   if (pct >= 80) return 'Good';
@@ -1176,36 +1268,41 @@ export function getSectionScore(sectionId: string, results: Record<string, strin
   return 'Poor';
 }
 
-// Overall score 0-100
-export function calculateOverallScore(results: Record<string, string>, numericResults: Record<string, number>): number {
+export function calculateOverallScore(results: Record<string, string>, numericResults: Record<string, number>, gender?: string, age?: number): number {
   let totalParams = 0;
   let passedScore = 0;
 
   for (const section of allSections) {
-    const params = getAllParameters(section);
+    const params = getAllParameters(section, gender, age);
     for (const { param } of params) {
       if (param.type === 'dropdown') {
         totalParams++;
         const val = results[param.id];
         if (val) {
-          const status = getParameterStatus(param, val);
-          if (status === 'pass') passedScore += 1;
-          else if (status === 'restricted') passedScore += 0.5;
+          const option = getParameterOption(param, val);
+          if (option) {
+             if (option.severity === 'green') passedScore += 1;
+             else if (option.severity === 'yellow') passedScore += 0.5;
+          }
         }
       } else if (param.type === 'number' && param.benchmarks) {
         totalParams++;
         const val = numericResults[param.id];
         if (val !== undefined) {
           const invertScale = param.id === 'counting_breath_rate';
-          const level = getStrengthLevel(val, param.benchmarks, invertScale);
-          if (level === 'Advanced') passedScore += 1;
-          else if (level === 'Intermediate') passedScore += 0.7;
-          else passedScore += 0.3;
+          if (invertScale) {
+            if (val <= param.benchmarks.advanced) passedScore += 1;
+            else if (val <= param.benchmarks.intermediate) passedScore += 0.7;
+            else passedScore += 0.3;
+          } else {
+            if (val >= param.benchmarks.advanced) passedScore += 1;
+            else if (val >= param.benchmarks.intermediate) passedScore += 0.7;
+            else passedScore += 0.3;
+          }
         }
       }
     }
   }
-
   if (totalParams === 0) return 0;
   return Math.round((passedScore / totalParams) * 100);
 }

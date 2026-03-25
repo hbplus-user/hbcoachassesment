@@ -1,5 +1,6 @@
 import { useAssessment } from '@/context/AssessmentContext';
-import { amrapProtocols } from '@/data/assessmentData';
+import { amrapProtocols, amrapSection } from '@/data/assessmentData';
+import { SectionStep } from '@/components/assessment/SectionStep';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
@@ -111,6 +112,10 @@ export function AmrapStep() {
           );
         })}
       </Card>
+
+      <div className="mt-8 pt-6 border-t border-border">
+        <SectionStep section={amrapSection} />
+      </div>
 
     </div>
   );

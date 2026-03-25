@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useAssessment } from '@/context/AssessmentContext';
-import { allSections, getAllParameters, getParameterStatus, getStrengthLevel, getSectionStatus, amrapProtocols } from '@/data/assessmentData';
+import { allSections, getParameterOption, getStrengthLevelInfo, getSectionStatus, amrapProtocols, isVisible, calculateAge } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === 'pass') return <Badge className="bg-[hsl(var(--status-pass))] text-white text-xs">✅ Pass</Badge>;
-  if (status === 'restricted') return <Badge className="bg-[hsl(var(--status-restricted))] text-white text-xs">⚠️ Restricted</Badge>;
-  if (status === 'painful') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs">🔴 Painful</Badge>;
+function StatusBadge({ severity, label }: { severity: string, label: string }) {
+  if (severity === 'green') return <Badge className="bg-[hsl(var(--status-pass))] text-white text-xs">✅ {label}</Badge>;
+  if (severity === 'yellow') return <Badge className="bg-[hsl(var(--status-restricted))] text-white text-xs">⚠️ {label}</Badge>;
+  if (severity === 'red') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs">🔴 {label}</Badge>;
   return <Badge variant="outline" className="text-xs">—</Badge>;
 }
 
@@ -22,6 +22,12 @@ export default function CoachReport() {
   const navigate = useNavigate();
   const { clientInfo, dropdownResults, numericResults, testNotes, coachNotes, amrapProtocol, amrapExerciseReps, amrapExerciseNotes } = useAssessment();
   const selectedProtocol = amrapProtocols.find(p => p.id === amrapProtocol) || amrapProtocols[0];
+  const gender = clientInfo?.gender?.toLowerCase() || '';
+  const age = calculateAge(clientInfo?.dob);
+
+  const isVisibleLocally = (target: { id: string; minAge?: number; maxAge?: number }) => {
+    return isVisible(target, gender, age);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,7 +62,7 @@ export default function CoachReport() {
 
         {/* Assessment Sections as Tables */}
         {allSections.map(section => {
-          const sectionResult = getSectionStatus(section, dropdownResults, numericResults);
+          const sectionResult = getSectionStatus(section, dropdownResults, numericResults, gender, age);
 
           return (
             <Card key={section.id} className="p-6 print-break">
@@ -78,16 +84,16 @@ export default function CoachReport() {
                     </tr>
                   </thead>
                   <tbody>
-                    {section.subsections?.map(sub =>
-                      sub.tests.map(test =>
+                    {section.subsections?.filter(isVisibleLocally).map(sub =>
+                      sub.tests.filter(isVisibleLocally).map(test =>
                         test.parameters.map((param, pIdx) => {
                           const val = param.type === 'dropdown' ? dropdownResults[param.id] : undefined;
                           const numVal = param.type === 'number' ? numericResults[param.id] : undefined;
                           const selectedLabel = param.options?.find(o => o.value === val)?.label;
-                          const status = val ? getParameterStatus(param, val) : undefined;
+                          const option = val ? getParameterOption(param, val) : undefined;
                           const isInvert = param.id === 'counting_breath_rate';
-                          const level = param.type === 'number' && param.benchmarks && numVal !== undefined
-                            ? getStrengthLevel(numVal, param.benchmarks, isInvert) : undefined;
+                          const levelInfo = param.type === 'number' && param.benchmarks && numVal !== undefined
+                            ? getStrengthLevelInfo(numVal, param, isInvert) : undefined;
 
                           return (
                             <tr key={param.id} className="border-b border-border/50 hover:bg-muted/30">
@@ -98,30 +104,26 @@ export default function CoachReport() {
                                 {selectedLabel || (numVal !== undefined ? `${numVal} ${param.unit || ''}` : '—')}
                               </td>
                               <td className="py-2 px-2">
-                                {status && <StatusBadge status={status} />}
-                                {level && (
-                                  <Badge className={`text-xs ${
-                                    level === 'Advanced' ? 'bg-[hsl(var(--status-pass))] text-white' :
-                                    level === 'Intermediate' ? 'bg-[hsl(var(--status-restricted))] text-white' :
-                                    'bg-[hsl(var(--status-issue))] text-white'
-                                  }`}>{level}</Badge>
+                                {option && <StatusBadge severity={option.severity} label={option.outputFlag} />}
+                                {levelInfo && (
+                                  <Badge className={`text-xs ${levelInfo.cssClass}`}>{levelInfo.level}</Badge>
                                 )}
-                                {!status && !level && <span className="text-muted-foreground">—</span>}
+                                {!option && !levelInfo && <span className="text-muted-foreground">—</span>}
                               </td>
                             </tr>
                           );
                         })
                       )
                     )}
-                    {section.tests?.map(test =>
+                    {section.tests?.filter(isVisibleLocally).map(test =>
                       test.parameters.map((param, pIdx) => {
                         const val = param.type === 'dropdown' ? dropdownResults[param.id] : undefined;
                         const numVal = param.type === 'number' ? numericResults[param.id] : undefined;
                         const selectedLabel = param.options?.find(o => o.value === val)?.label;
-                        const status = val ? getParameterStatus(param, val) : undefined;
+                        const option = val ? getParameterOption(param, val) : undefined;
                         const isInvert = param.id === 'counting_breath_rate';
-                        const level = param.type === 'number' && param.benchmarks && numVal !== undefined
-                          ? getStrengthLevel(numVal, param.benchmarks, isInvert) : undefined;
+                        const levelInfo = param.type === 'number' && param.benchmarks && numVal !== undefined
+                          ? getStrengthLevelInfo(numVal, param, isInvert) : undefined;
 
                         return (
                           <tr key={param.id} className="border-b border-border/50 hover:bg-muted/30">
@@ -132,15 +134,11 @@ export default function CoachReport() {
                               {selectedLabel || (numVal !== undefined ? `${numVal} ${param.unit || ''}` : '—')}
                             </td>
                             <td className="py-2 px-2">
-                              {status && <StatusBadge status={status} />}
-                              {level && (
-                                <Badge className={`text-xs ${
-                                  level === 'Advanced' ? 'bg-[hsl(var(--status-pass))] text-white' :
-                                  level === 'Intermediate' ? 'bg-[hsl(var(--status-restricted))] text-white' :
-                                  'bg-[hsl(var(--status-issue))] text-white'
-                                }`}>{level}</Badge>
+                              {option && <StatusBadge severity={option.severity} label={option.outputFlag} />}
+                              {levelInfo && (
+                                <Badge className={`text-xs ${levelInfo.cssClass}`}>{levelInfo.level}</Badge>
                               )}
-                              {!status && !level && <span className="text-muted-foreground">—</span>}
+                              {!option && !levelInfo && <span className="text-muted-foreground">—</span>}
                             </td>
                           </tr>
                         );
@@ -152,7 +150,7 @@ export default function CoachReport() {
 
               {/* Test notes */}
               {(() => {
-                const allTests = [...(section.subsections?.flatMap(s => s.tests) || []), ...(section.tests || [])];
+                const allTests = [...(section.subsections?.flatMap(s => s.tests.filter(isVisibleLocally)) || []), ...(section.tests?.filter(isVisibleLocally) || [])];
                 const notedTests = allTests.filter(t => testNotes[t.id]);
                 if (notedTests.length === 0) return null;
                 return (

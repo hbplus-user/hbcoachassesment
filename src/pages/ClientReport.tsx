@@ -1,55 +1,42 @@
 import { useNavigate } from 'react-router-dom';
 import { useAssessment } from '@/context/AssessmentContext';
-import { allSections, getAllParameters, getParameterStatus, getStrengthLevel, calculateOverallScore, getSectionScore } from '@/data/assessmentData';
+import { allSections, getAllParameters, getParameterOption, getStrengthLevelInfo, calculateAge } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 
 export default function ClientReport() {
   const navigate = useNavigate();
   const { clientInfo, dropdownResults, numericResults, coachNotes } = useAssessment();
-
-  const overallScore = calculateOverallScore(dropdownResults, numericResults);
+  const gender = clientInfo?.gender?.toLowerCase() || '';
+  const age = calculateAge(clientInfo?.dob);
 
   // Collect red flags / issues
   const issues: { section: string; testName: string; paramName: string; severity: 'painful' | 'restricted' }[] = [];
 
   for (const section of allSections) {
-    const params = getAllParameters(section);
+    const params = getAllParameters(section, gender, age);
     for (const { param, testName } of params) {
       if (param.type === 'dropdown') {
         const val = dropdownResults[param.id];
         if (val) {
-          const status = getParameterStatus(param, val);
-          if (status === 'painful') {
+          const option = getParameterOption(param, val);
+          if (option?.severity === 'red') {
             issues.push({ section: section.name, testName, paramName: param.name, severity: 'painful' });
-          } else if (status === 'restricted') {
+          } else if (option?.severity === 'yellow') {
             issues.push({ section: section.name, testName, paramName: param.name, severity: 'restricted' });
           }
         }
       } else if (param.type === 'number' && param.benchmarks) {
         const val = numericResults[param.id];
         if (val !== undefined) {
-          const level = getStrengthLevel(val, param.benchmarks, param.id === 'counting_breath_rate');
-          if (level === 'Beginner') {
-            issues.push({ section: section.name, testName, paramName: `${param.name} — needs improvement`, severity: 'restricted' });
+          const info = getStrengthLevelInfo(val, param, param.id === 'counting_breath_rate');
+          if (info.cssClass.includes('issue')) {
+            issues.push({ section: section.name, testName, paramName: `${param.name} — ${info.level}`, severity: 'restricted' });
           }
         }
       }
     }
   }
-
-  const sectionScores = allSections.map(s => ({
-    name: s.name,
-    icon: s.icon,
-    score: getSectionScore(s.id, dropdownResults, numericResults),
-  }));
-
-  const scoreColor = overallScore >= 80
-    ? 'text-[hsl(var(--status-pass))]'
-    : overallScore >= 60
-    ? 'text-[hsl(var(--status-restricted))]'
-    : 'text-[hsl(var(--status-issue))]';
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,36 +63,6 @@ export default function ClientReport() {
             <div><span className="font-semibold text-muted-foreground">Date:</span> {clientInfo.date || '—'}</div>
             <div><span className="font-semibold text-muted-foreground">Coach:</span> {clientInfo.coachName || '—'}</div>
             <div><span className="font-semibold text-muted-foreground">DOB:</span> {clientInfo.dob || '—'}</div>
-          </div>
-        </Card>
-
-        {/* Overall Score */}
-        <Card className="p-6 text-center">
-          <h2 className="text-lg font-bold text-foreground mb-4">Overall Fitness Score</h2>
-          <div className={`text-6xl font-black ${scoreColor}`}>{overallScore}</div>
-          <div className="text-muted-foreground text-sm mt-1">out of 100</div>
-          <Progress value={overallScore} className="mt-4 h-3 max-w-xs mx-auto" />
-        </Card>
-
-        {/* Section Summary */}
-        <Card className="p-6">
-          <h2 className="text-lg font-bold text-foreground mb-4">Assessment Summary</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {sectionScores.map(s => {
-              const color = s.score === 'Good'
-                ? 'border-[hsl(var(--status-pass))]/30 bg-[hsl(var(--status-pass))]/5'
-                : s.score === 'Average'
-                ? 'border-[hsl(var(--status-restricted))]/30 bg-[hsl(var(--status-restricted))]/5'
-                : 'border-[hsl(var(--status-issue))]/30 bg-[hsl(var(--status-issue))]/5';
-              const icon = s.score === 'Good' ? '✅' : s.score === 'Average' ? '⚠️' : s.score === 'N/A' ? '—' : '🔴';
-
-              return (
-                <div key={s.name} className={`p-3 rounded-lg border ${color} flex items-center justify-between`}>
-                  <span className="text-sm font-medium text-foreground">{s.icon} {s.name}</span>
-                  <span className="text-sm font-semibold">{icon} {s.score}</span>
-                </div>
-              );
-            })}
           </div>
         </Card>
 

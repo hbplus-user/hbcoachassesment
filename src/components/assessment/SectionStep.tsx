@@ -1,43 +1,48 @@
 import { useAssessment } from '@/context/AssessmentContext';
-import { Section, Parameter, getParameterStatus, getStrengthLevel } from '@/data/assessmentData';
+import { Section, Parameter, getParameterOption, getStrengthLevelInfo, BenchmarkOption, calculateAge, isVisible } from '@/data/assessmentData';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 
-function OutputFlag({ status }: { status: string }) {
-  if (status === 'pass') return <Badge className="bg-[hsl(var(--status-pass))] text-white text-xs gap-1">✅ Pass</Badge>;
-  if (status === 'restricted') return <Badge className="bg-[hsl(var(--status-restricted))] text-white text-xs gap-1">⚠️ Restricted</Badge>;
-  if (status === 'painful') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs gap-1">🔴 Painful</Badge>;
+function OutputFlag({ option }: { option?: BenchmarkOption }) {
+  if (!option) return null;
+  const { severity, outputFlag } = option;
+  
+  if (severity === 'green') return <Badge className="bg-[hsl(var(--status-pass))] text-white text-xs gap-1">✓ {outputFlag}</Badge>;
+  if (severity === 'yellow') return <Badge className="bg-[hsl(var(--status-restricted))] text-white text-xs gap-1">⚠️ {outputFlag}</Badge>;
+  if (severity === 'red') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs gap-1">⚠️ {outputFlag}</Badge>;
   return null;
 }
 
-function OutputLabel({ option }: { option: { status: string; label: string; description?: string } }) {
+function OutputLabel({ option }: { option: { status?: string; severity?: string; label: string; description?: string } }) {
+  const severityVal = option.severity || option.status || 'green';
   const colorMap: Record<string, string> = {
     pass: 'text-[hsl(var(--status-pass))]',
+    green: 'text-[hsl(var(--status-pass))]',
     restricted: 'text-[hsl(var(--status-restricted))]',
+    yellow: 'text-[hsl(var(--status-restricted))]',
     painful: 'text-[hsl(var(--status-issue))]',
+    red: 'text-[hsl(var(--status-issue))]',
   };
   const iconMap: Record<string, string> = {
     pass: '✓',
+    green: '✓',
     restricted: '△',
+    yellow: '△',
     painful: '●',
+    red: '●',
   };
   return (
-    <span className={`text-xs font-semibold ${colorMap[option.status] || ''}`}>
-      {iconMap[option.status]} {option.label}
+    <span className={`text-xs font-semibold ${colorMap[severityVal] || ''}`}>
+      {iconMap[severityVal]} {option.label}
     </span>
   );
 }
 
-function LevelBadge({ level }: { level: string }) {
-  const colors: Record<string, string> = {
-    Advanced: 'bg-[hsl(var(--status-pass))] text-white',
-    Intermediate: 'bg-[hsl(var(--status-restricted))] text-white',
-    Beginner: 'bg-[hsl(var(--status-issue))] text-white',
-  };
-  return <Badge className={`${colors[level] || ''} text-xs`}>{level}</Badge>;
+function LevelBadge({ info }: { info: { level: string, cssClass: string } }) {
+  return <Badge className={`${info.cssClass} text-xs`}>{info.level}</Badge>;
 }
 
 function ParameterRow({ param }: { param: Parameter }) {
@@ -97,12 +102,12 @@ function ParameterRow({ param }: { param: Parameter }) {
 
       <div className="sm:w-28 shrink-0 flex justify-end">
         {param.type === 'dropdown' && dropdownVal && (
-          <OutputFlag status={getParameterStatus(param, dropdownVal)} />
+          <OutputFlag option={getParameterOption(param, dropdownVal)} />
         )}
         {param.type === 'number' && param.benchmarks && numericVal !== undefined && (
-          <LevelBadge level={getStrengthLevel(
+          <LevelBadge info={getStrengthLevelInfo(
             numericVal,
-            param.benchmarks,
+            param,
             param.id === 'counting_breath_rate'
           )} />
         )}
@@ -116,7 +121,13 @@ interface Props {
 }
 
 export function SectionStep({ section }: Props) {
-  const { testNotes, setTestNote } = useAssessment();
+  const { testNotes, setTestNote, clientInfo } = useAssessment();
+  const gender = clientInfo?.gender?.toLowerCase() || '';
+  const age = calculateAge(clientInfo?.dob);
+
+  const isVisibleLocally = (target: { id: string; minAge?: number; maxAge?: number }) => {
+    return isVisible(target, gender, age);
+  };
 
   return (
     <div className="space-y-6">
@@ -127,11 +138,11 @@ export function SectionStep({ section }: Props) {
         </p>
       </div>
 
-      {section.subsections?.map(sub => (
+      {section.subsections?.filter(isVisibleLocally).map(sub => (
         <div key={sub.id} className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">{sub.name}</h3>
 
-          {sub.tests.map(test => (
+          {sub.tests.filter(isVisibleLocally).map(test => (
             <div key={test.id} className="space-y-2">
               <h4 className="text-sm font-bold text-foreground ml-1">{test.name}</h4>
               <div className="space-y-1">
@@ -153,7 +164,7 @@ export function SectionStep({ section }: Props) {
 
       {section.tests && (
         <div className="space-y-4">
-          {section.tests.map(test => (
+          {section.tests.filter(isVisibleLocally).map(test => (
             <div key={test.id} className="space-y-2">
               <h4 className="text-sm font-bold text-foreground ml-1">{test.name}</h4>
               <div className="space-y-1">

@@ -10,6 +10,8 @@ import { EnduranceStep } from '@/components/assessment/EnduranceStep';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 const STEP_LABELS = [
   'Client Info',
@@ -24,8 +26,10 @@ const STEP_LABELS = [
 
 const Index = () => {
   const [step, setStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { clientInfo } = useAssessment();
+  const contextData = useAssessment();
+  const { clientInfo } = contextData;
   const totalSteps = STEP_LABELS.length;
   const progress = ((step + 1) / totalSteps) * 100;
 
@@ -44,8 +48,30 @@ const Index = () => {
     return true;
   };
 
-  const handleSubmit = () => {
-    navigate('/report/coach');
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Save data to Supabase
+      const { error } = await supabase
+        .from('assessments')
+        .insert([{
+          client_name: clientInfo.clientName,
+          coach_name: clientInfo.coachName,
+          date: clientInfo.date,
+          data: contextData // Save entire assessment context as JSONB
+        }]);
+
+      if (error) throw error;
+      
+      toast.success('Assessment saved successfully!');
+      navigate('/report/coach');
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+      toast.error('Failed to save assessment. Proceeding to report anyway.');
+      navigate('/report/coach'); // Still allow viewing the report even if save fails
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -104,8 +130,12 @@ const Index = () => {
               Next →
             </Button>
           ) : (
-            <Button onClick={handleSubmit} className="bg-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))]/90 text-accent-foreground">
-              Generate Reports →
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting}
+              className="bg-[hsl(var(--accent))] hover:bg-[hsl(var(--accent))]/90 text-accent-foreground"
+            >
+              {isSubmitting ? 'Saving...' : 'Generate Reports →'}
             </Button>
           )}
         </div>

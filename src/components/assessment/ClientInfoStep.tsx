@@ -1,11 +1,35 @@
+import { useEffect, useState } from 'react';
 import { useAssessment, ClientInfo } from '@/context/AssessmentContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/lib/supabase';
 
 export function ClientInfoStep() {
   const { clientInfo, setClientInfo } = useAssessment();
+  const [coaches, setCoaches] = useState<{ id: string; name: string }[]>([]);
+  const [loadingCoaches, setLoadingCoaches] = useState(true);
+
+  useEffect(() => {
+    async function fetchCoaches() {
+      try {
+        const { data, error } = await supabase
+          .from('coaches')
+          .select('id, name')
+          .order('name');
+        
+        if (error) throw error;
+        setCoaches(data || []);
+      } catch (error) {
+        console.error('Error fetching coaches:', error);
+      } finally {
+        setLoadingCoaches(false);
+      }
+    }
+    
+    fetchCoaches();
+  }, []);
 
   const update = (field: keyof ClientInfo, value: string) => {
     setClientInfo({ ...clientInfo, [field]: value });
@@ -25,7 +49,27 @@ export function ClientInfoStep() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="coachName">Coach Name *</Label>
-          <Input id="coachName" value={clientInfo.coachName} onChange={e => update('coachName', e.target.value)} placeholder="Coach full name" />
+          <Select 
+            value={clientInfo.coachName} 
+            onValueChange={v => update('coachName', v)}
+            disabled={loadingCoaches}
+          >
+            <SelectTrigger id="coachName">
+              <SelectValue placeholder={loadingCoaches ? "Loading coaches..." : "Select a coach"} />
+            </SelectTrigger>
+            <SelectContent>
+              {coaches.map(coach => (
+                <SelectItem key={coach.id} value={coach.name}>
+                  {coach.name}
+                </SelectItem>
+              ))}
+              {coaches.length === 0 && !loadingCoaches && (
+                <SelectItem value="No coaches found" disabled>
+                  No coaches found
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor="date">Assessment Date</Label>
