@@ -879,6 +879,114 @@ export const balanceSection: Section = {
 };
 
 // ============ AMRAP CONDITIONING ============
+
+export interface AmrapExercise {
+  category: string;
+  primaryMovement: string;
+  regressionOption: string;
+  defaultRepsTime: string;
+  defaultCoachNotes: string;
+}
+
+export interface AmrapProtocol {
+  id: string;
+  name: string;
+  color: string;
+  exercises: AmrapExercise[];
+}
+
+export const amrapProtocols: AmrapProtocol[] = [
+  {
+    id: 'standard',
+    name: 'AMRAP – STANDARD (10 min)',
+    color: 'teal',
+    exercises: [
+      { category: 'Upper Body Push', primaryMovement: 'Push-ups', regressionOption: 'Knee Push-ups', defaultRepsTime: '7 reps', defaultCoachNotes: 'Neutral spine, full ROM' },
+      { category: 'Upper Body + Core', primaryMovement: 'Plank to High Plank', regressionOption: 'High Plank Shoulder Taps', defaultRepsTime: '7 reps', defaultCoachNotes: 'Avoid lumbar sag' },
+      { category: 'Lower Body', primaryMovement: 'Split Jumps', regressionOption: 'Backward / Assisted Lunges', defaultRepsTime: '7 ea leg', defaultCoachNotes: 'Knee tracking' },
+      { category: 'Core Rotation', primaryMovement: 'Russian Twists', regressionOption: 'Feet on Floor Twists', defaultRepsTime: '7 each side', defaultCoachNotes: 'Avoid lumbar flexion pain' },
+      { category: 'Endurance', primaryMovement: 'Burpees', regressionOption: 'Step-back Burpees', defaultRepsTime: '7 reps', defaultCoachNotes: 'Monitor HR' },
+      { category: 'Isometric Hold', primaryMovement: 'Beast Hold', regressionOption: 'High Plank Hold', defaultRepsTime: '30 sec', defaultCoachNotes: 'Neutral spine' },
+    ],
+  },
+  {
+    id: 'knee_safe',
+    name: 'AMRAP – KNEE PAIN SAFE (10 min)',
+    color: 'orange',
+    exercises: [
+      { category: 'Upper Body Push', primaryMovement: 'Push-ups', regressionOption: 'Knee Push-ups', defaultRepsTime: '7 reps', defaultCoachNotes: 'Neutral spine, full ROM' },
+      { category: 'Upper Body + Core', primaryMovement: 'Plank to High Plank', regressionOption: 'High Plank Shoulder Taps', defaultRepsTime: '7 reps', defaultCoachNotes: 'Avoid lumbar sag' },
+      { category: 'Core Rotation', primaryMovement: 'Russian Twists', regressionOption: 'Feet on Floor Twists', defaultRepsTime: '7 each side', defaultCoachNotes: 'Avoid lumbar flexion pain' },
+      { category: 'Upper Body', primaryMovement: 'Tricep Dips', regressionOption: 'Tricep Dips', defaultRepsTime: '7 each side', defaultCoachNotes: 'Neutral spine' },
+      { category: 'Endurance', primaryMovement: 'Elbow Plank / Mtn Climbers', regressionOption: 'Mountain Climbers', defaultRepsTime: '30 sec', defaultCoachNotes: 'Monitor HR' },
+      { category: 'Isometric Hold', primaryMovement: 'Beast Hold / Plank Hold', regressionOption: 'High Plank Hold', defaultRepsTime: '30 sec', defaultCoachNotes: 'Neutral spine' },
+    ],
+  },
+  {
+    id: 'back_safe',
+    name: 'AMRAP – BACK PAIN SAFE (10 min)',
+    color: 'coral',
+    exercises: [
+      { category: 'Upper Body Push', primaryMovement: 'Push-ups', regressionOption: 'Knee Push-ups', defaultRepsTime: '7 reps', defaultCoachNotes: 'Neutral spine, full ROM' },
+      { category: 'Upper Body + Core', primaryMovement: 'Plank to High Plank', regressionOption: 'High Plank Shoulder Taps', defaultRepsTime: '7 reps', defaultCoachNotes: 'Avoid lumbar sag' },
+      { category: 'Upper Body', primaryMovement: 'Tricep Dips', regressionOption: 'Tricep Dips', defaultRepsTime: '7 each side', defaultCoachNotes: 'Neutral spine' },
+      { category: 'Isometric Hold', primaryMovement: 'Wall Sit Hold', regressionOption: 'Wall Sit Hold', defaultRepsTime: '30 sec', defaultCoachNotes: 'Perpendicular alignment' },
+      { category: 'Endurance', primaryMovement: 'Mountain Climbers', regressionOption: 'Mountain Climbers', defaultRepsTime: '30 sec', defaultCoachNotes: 'Monitor HR' },
+      { category: 'Endurance', primaryMovement: 'Foot Fires', regressionOption: 'Marching in Place', defaultRepsTime: '30 sec', defaultCoachNotes: 'No spinal flexion' },
+    ],
+  },
+];
+
+export interface AmrapScoringParam {
+  id: string;
+  name: string;
+  description: string;
+  options: { label: string; value: string; score: number; status: StatusFlag }[];
+}
+
+export const amrapScoringGuide: AmrapScoringParam[] = [
+  {
+    id: 'amrap_rounds',
+    name: 'Rounds Completed',
+    description: 'Total full rounds in 10 min',
+    options: [
+      { label: '1 round', value: '1', score: 1, status: 'painful' },
+      { label: '2-3 rounds', value: '2-3', score: 2, status: 'restricted' },
+      { label: '3+ rounds', value: '3+', score: 3, status: 'pass' },
+    ],
+  },
+  {
+    id: 'amrap_hr',
+    name: 'HR Response',
+    description: 'Normal / Elevated / Excessive',
+    options: [
+      { label: 'Normal', value: 'normal', score: 3, status: 'pass' },
+      { label: 'Elevated', value: 'elevated', score: 2, status: 'restricted' },
+      { label: 'Excessive', value: 'excessive', score: 1, status: 'painful' },
+    ],
+  },
+  {
+    id: 'amrap_quality',
+    name: 'Movement Quality',
+    description: 'Good / Compensated / Poor',
+    options: [
+      { label: 'Good', value: 'good', score: 3, status: 'pass' },
+      { label: 'Compensated', value: 'compensated', score: 2, status: 'restricted' },
+      { label: 'Poor', value: 'poor', score: 1, status: 'painful' },
+    ],
+  },
+  {
+    id: 'amrap_pain',
+    name: 'Pain Report',
+    description: 'Severe / Tolerable / No',
+    options: [
+      { label: 'No Pain', value: 'no', score: 3, status: 'pass' },
+      { label: 'Tolerable', value: 'tolerable', score: 2, status: 'restricted' },
+      { label: 'Severe', value: 'severe', score: 1, status: 'painful' },
+    ],
+  },
+];
+
 export const amrapSection: Section = {
   id: 'amrap',
   name: 'AMRAP Conditioning Test',
@@ -886,39 +994,47 @@ export const amrapSection: Section = {
   icon: '⏱️',
   tests: [
     {
-      id: 'amrap_test',
-      name: 'AMRAP Performance',
+      id: 'amrap_scoring',
+      name: 'AMRAP Scoring',
       parameters: [
         {
-          id: 'amrap_rounds',
+          id: 'amrap_rounds_score',
           name: 'Rounds Completed',
-          type: 'number',
-          unit: 'rounds',
-        },
-        {
-          id: 'amrap_heart_rate',
-          name: 'Heart Rate (post-test)',
-          type: 'number',
-          unit: 'bpm',
-        },
-        {
-          id: 'amrap_movement_quality',
-          name: 'Movement Quality',
           type: 'dropdown',
           options: [
-            opt('Excellent form maintained', 'excellent', 'pass'),
-            opt('Moderate form breakdown', 'moderate', 'restricted'),
-            opt('Significant form breakdown', 'poor', 'painful'),
+            opt('1 round (Score: 1)', '1', 'painful'),
+            opt('2-3 rounds (Score: 2)', '2-3', 'restricted'),
+            opt('3+ rounds (Score: 3)', '3+', 'pass'),
           ],
         },
         {
-          id: 'amrap_pain',
+          id: 'amrap_hr_score',
+          name: 'HR Response',
+          type: 'dropdown',
+          options: [
+            opt('Normal (Score: 3)', 'normal', 'pass'),
+            opt('Elevated (Score: 2)', 'elevated', 'restricted'),
+            opt('Excessive (Score: 1)', 'excessive', 'painful'),
+          ],
+        },
+        {
+          id: 'amrap_quality_score',
+          name: 'Movement Quality',
+          type: 'dropdown',
+          options: [
+            opt('Good (Score: 3)', 'good', 'pass'),
+            opt('Compensated (Score: 2)', 'compensated', 'restricted'),
+            opt('Poor (Score: 1)', 'poor', 'painful'),
+          ],
+        },
+        {
+          id: 'amrap_pain_score',
           name: 'Pain Report',
           type: 'dropdown',
           options: [
-            opt('No pain reported', 'none', 'pass'),
-            opt('Mild discomfort', 'mild', 'restricted'),
-            opt('Pain reported', 'pain', 'painful'),
+            opt('No Pain (Score: 3)', 'no', 'pass'),
+            opt('Tolerable (Score: 2)', 'tolerable', 'restricted'),
+            opt('Severe (Score: 1)', 'severe', 'painful'),
           ],
         },
       ],
