@@ -171,6 +171,55 @@ export default function CoachReport() {
           );
         })}
 
+        {/* AMRAP Exercise Protocol */}
+        <Card className="p-6 print-break">
+          <h2 className="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">⏱️ AMRAP Protocol: {selectedProtocol.name}</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left">
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Category</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Primary Movement</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Regression</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Reps / Time</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Coach Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedProtocol.exercises.map((ex, idx) => {
+                  const key = `${amrapProtocol}_${idx}`;
+                  return (
+                    <tr key={idx} className="border-b border-border/50">
+                      <td className="py-2 px-2 font-medium text-foreground">{ex.category}</td>
+                      <td className="py-2 px-2 text-foreground">{ex.primaryMovement}</td>
+                      <td className="py-2 px-2 text-muted-foreground">{ex.regressionOption}</td>
+                      <td className="py-2 px-2 text-foreground">{amrapExerciseReps[key] || ex.defaultRepsTime}</td>
+                      <td className="py-2 px-2 text-muted-foreground italic">{amrapExerciseNotes[key] || ex.defaultCoachNotes}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* AMRAP Scores */}
+          <div className="mt-4 border-t border-border pt-4">
+            <h3 className="text-sm font-bold text-foreground mb-2">Scoring</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {amrapScoringGuide.map(param => {
+                const val = dropdownResults[param.id];
+                const opt = param.options.find(o => o.value === val);
+                return (
+                  <div key={param.id} className="p-2 bg-muted/30 rounded text-sm">
+                    <div className="font-semibold text-foreground">{param.name}</div>
+                    <div className="text-muted-foreground">{opt ? `${opt.label} (${opt.score}/3)` : '—'}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
+
         {/* Coach Notes */}
         {(coachNotes.movementCorrections || coachNotes.injuryPrecautions || coachNotes.trainingFocus) && (
           <Card className="p-6 print-break">
