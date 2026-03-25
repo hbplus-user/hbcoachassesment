@@ -13,6 +13,24 @@ function OutputFlag({ status }: { status: string }) {
   return null;
 }
 
+function OutputLabel({ option }: { option: { status: string; label: string; description?: string } }) {
+  const colorMap: Record<string, string> = {
+    pass: 'text-[hsl(var(--status-pass))]',
+    restricted: 'text-[hsl(var(--status-restricted))]',
+    painful: 'text-[hsl(var(--status-issue))]',
+  };
+  const iconMap: Record<string, string> = {
+    pass: '✓',
+    restricted: '△',
+    painful: '●',
+  };
+  return (
+    <span className={`text-xs font-semibold ${colorMap[option.status] || ''}`}>
+      {iconMap[option.status]} {option.label}
+    </span>
+  );
+}
+
 function LevelBadge({ level }: { level: string }) {
   const colors: Record<string, string> = {
     Advanced: 'bg-[hsl(var(--status-pass))] text-white',
@@ -38,16 +56,25 @@ function ParameterRow({ param }: { param: Parameter }) {
 
       <div className="flex-1">
         {param.type === 'dropdown' && param.options && (
-          <Select value={dropdownVal || ''} onValueChange={v => setDropdownResult(param.id, v)}>
-            <SelectTrigger className="w-full h-9 text-sm">
-              <SelectValue placeholder="Select benchmark..." />
-            </SelectTrigger>
-            <SelectContent>
-              {param.options.map(opt => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-1">
+            <Select value={dropdownVal || ''} onValueChange={v => setDropdownResult(param.id, v)}>
+              <SelectTrigger className="w-full h-9 text-sm">
+                <SelectValue placeholder="Select benchmark..." />
+              </SelectTrigger>
+              <SelectContent>
+                {param.options.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div className="flex flex-col">
+                      <span>{opt.label}</span>
+                      {opt.description && (
+                        <span className="text-xs text-muted-foreground">{opt.description}</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
 
         {param.type === 'number' && (
