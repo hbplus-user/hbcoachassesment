@@ -825,7 +825,7 @@ export const enduranceSection: Section = {
 // ============ BALANCE TEST ============
 export const balanceSection: Section = {
   id: 'balance',
-  name: 'Balance Test',
+  name: 'Balance – Single Leg Stance Test',
   component: 'Balance',
   icon: '⚖️',
   tests: [
@@ -834,15 +834,21 @@ export const balanceSection: Section = {
       name: 'Single Leg Stance (Left)',
       parameters: [
         {
-          id: 'single_leg_left_stability',
-          name: 'Stability',
+          id: 'single_leg_left_quality',
+          name: 'Quality',
           type: 'dropdown',
           options: [
-            opt('Optimal Stability (30s+ no wobble)', 'optimal', 'pass'),
-            opt('Functional Stability (15-30s minor wobble)', 'functional', 'pass'),
-            opt('Poor Stability (5-15s significant wobble)', 'poor', 'restricted'),
-            opt('Severely Impaired (<5s unable to balance)', 'severe', 'painful'),
+            { label: 'Good Control – Eyes Open', value: 'good_control', status: 'pass', severity: 'green', description: 'Stable, minimal sway' },
+            { label: 'Minor Wobbles', value: 'minor_wobbles', status: 'restricted', severity: 'yellow', description: 'Some sway visible' },
+            { label: 'Multiple Compensations', value: 'multiple_comp', status: 'restricted', severity: 'yellow', description: 'Clear movement errors' },
+            { label: 'Loss of Balance', value: 'loss_balance', status: 'painful', severity: 'red', description: 'Cannot maintain' },
           ],
+        },
+        {
+          id: 'single_leg_left_time',
+          name: 'Time of Balance',
+          type: 'number',
+          unit: 'seconds',
         },
       ],
     },
@@ -851,15 +857,21 @@ export const balanceSection: Section = {
       name: 'Single Leg Stance (Right)',
       parameters: [
         {
-          id: 'single_leg_right_stability',
-          name: 'Stability',
+          id: 'single_leg_right_quality',
+          name: 'Quality',
           type: 'dropdown',
           options: [
-            opt('Optimal Stability (30s+ no wobble)', 'optimal', 'pass'),
-            opt('Functional Stability (15-30s minor wobble)', 'functional', 'pass'),
-            opt('Poor Stability (5-15s significant wobble)', 'poor', 'restricted'),
-            opt('Severely Impaired (<5s unable to balance)', 'severe', 'painful'),
+            { label: 'Good Control – Eyes Open', value: 'good_control', status: 'pass', severity: 'green', description: 'Stable, minimal sway' },
+            { label: 'Minor Wobbles', value: 'minor_wobbles', status: 'restricted', severity: 'yellow', description: 'Some sway visible' },
+            { label: 'Multiple Compensations', value: 'multiple_comp', status: 'restricted', severity: 'yellow', description: 'Clear movement errors' },
+            { label: 'Loss of Balance', value: 'loss_balance', status: 'painful', severity: 'red', description: 'Cannot maintain' },
           ],
+        },
+        {
+          id: 'single_leg_right_time',
+          name: 'Time of Balance',
+          type: 'number',
+          unit: 'seconds',
         },
       ],
     },
