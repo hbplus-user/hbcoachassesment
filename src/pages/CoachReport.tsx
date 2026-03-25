@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAssessment } from '@/context/AssessmentContext';
-import { allSections, getAllParameters, getParameterStatus, getStrengthLevel, getSectionStatus, amrapProtocols, amrapScoringGuide } from '@/data/assessmentData';
+import { allSections, getAllParameters, getParameterStatus, getStrengthLevel, getSectionStatus, amrapProtocols } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';

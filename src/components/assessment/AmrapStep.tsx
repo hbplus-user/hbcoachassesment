@@ -9,7 +9,6 @@ export function AmrapStep() {
     amrapProtocol, setAmrapProtocol,
     amrapExerciseNotes, setAmrapExerciseNote,
     amrapExerciseReps, setAmrapExerciseRep,
-    dropdownResults, setDropdownResult,
   } = useAssessment();
 
   const selectedProtocol = amrapProtocols.find(p => p.id === amrapProtocol) || amrapProtocols[0];
