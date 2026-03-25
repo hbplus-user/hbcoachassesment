@@ -7,6 +7,7 @@ export interface BenchmarkOption {
   value: string;
   status: StatusFlag;
   severity: SeverityLevel;
+  description?: string;
 }
 
 export interface Parameter {
