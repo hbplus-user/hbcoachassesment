@@ -5,6 +5,7 @@ import { allSections } from '@/data/assessmentData';
 import { ClientInfoStep } from '@/components/assessment/ClientInfoStep';
 import { SectionStep } from '@/components/assessment/SectionStep';
 import { CoachNotesStep } from '@/components/assessment/CoachNotesStep';
+import { AmrapStep } from '@/components/assessment/AmrapStep';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
@@ -29,7 +30,8 @@ const Index = () => {
 
   const renderStep = () => {
     if (step === 0) return <ClientInfoStep />;
-    if (step >= 1 && step <= 6) return <SectionStep section={allSections[step - 1]} />;
+    if (step >= 1 && step <= 5) return <SectionStep section={allSections[step - 1]} />;
+    if (step === 6) return <AmrapStep />;
     if (step === 7) return <CoachNotesStep />;
     return null;
   };
