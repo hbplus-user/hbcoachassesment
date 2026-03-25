@@ -6,6 +6,7 @@ import { ClientInfoStep } from '@/components/assessment/ClientInfoStep';
 import { SectionStep } from '@/components/assessment/SectionStep';
 import { CoachNotesStep } from '@/components/assessment/CoachNotesStep';
 import { AmrapStep } from '@/components/assessment/AmrapStep';
+import { EnduranceStep } from '@/components/assessment/EnduranceStep';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
