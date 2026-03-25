@@ -4,13 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 
-function ScoringFlag({ status }: { status: string }) {
-  if (status === 'pass') return <Badge className="bg-[hsl(var(--status-pass))] text-white text-xs">✅ Good</Badge>;
-  if (status === 'restricted') return <Badge className="bg-[hsl(var(--status-restricted))] text-white text-xs">⚠️ Moderate</Badge>;
-  if (status === 'painful') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs">🔴 Poor</Badge>;
-  return null;
-}
-
 export function AmrapStep() {
   const {
     amrapProtocol, setAmrapProtocol,
