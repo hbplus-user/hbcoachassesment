@@ -13,6 +13,24 @@ function OutputFlag({ status }: { status: string }) {
   return null;
 }
 
+function OutputLabel({ option }: { option: { status: string; label: string; description?: string } }) {
+  const colorMap: Record<string, string> = {
+    pass: 'text-[hsl(var(--status-pass))]',
+    restricted: 'text-[hsl(var(--status-restricted))]',
+    painful: 'text-[hsl(var(--status-issue))]',
+  };
+  const iconMap: Record<string, string> = {
+    pass: '✓',
+    restricted: '△',
+    painful: '●',
+  };
+  return (
+    <span className={`text-xs font-semibold ${colorMap[option.status] || ''}`}>
+      {iconMap[option.status]} {option.label}
+    </span>
+  );
+}
+
 function LevelBadge({ level }: { level: string }) {
   const colors: Record<string, string> = {
     Advanced: 'bg-[hsl(var(--status-pass))] text-white',
