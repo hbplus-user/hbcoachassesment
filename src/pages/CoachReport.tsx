@@ -20,7 +20,8 @@ function SectionResultBadge({ result }: { result: 'pass' | 'limitation' | 'red_f
 
 export default function CoachReport() {
   const navigate = useNavigate();
-  const { clientInfo, dropdownResults, numericResults, testNotes, coachNotes } = useAssessment();
+  const { clientInfo, dropdownResults, numericResults, testNotes, coachNotes, amrapProtocol, amrapExerciseReps, amrapExerciseNotes } = useAssessment();
+  const selectedProtocol = amrapProtocols.find(p => p.id === amrapProtocol) || amrapProtocols[0];
 
   return (
     <div className="min-h-screen bg-background">
