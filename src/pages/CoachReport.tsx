@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAssessment } from '@/context/AssessmentContext';
-import { allSections, getAllParameters, getParameterStatus, getStrengthLevel, getSectionStatus, amrapProtocols, amrapScoringGuide } from '@/data/assessmentData';
+import { allSections, getAllParameters, getParameterStatus, getStrengthLevel, getSectionStatus, amrapProtocols } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -202,22 +202,6 @@ export default function CoachReport() {
             </table>
           </div>
 
-          {/* AMRAP Scores */}
-          <div className="mt-4 border-t border-border pt-4">
-            <h3 className="text-sm font-bold text-foreground mb-2">Scoring</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {amrapScoringGuide.map(param => {
-                const val = dropdownResults[param.id];
-                const opt = param.options.find(o => o.value === val);
-                return (
-                  <div key={param.id} className="p-2 bg-muted/30 rounded text-sm">
-                    <div className="font-semibold text-foreground">{param.name}</div>
-                    <div className="text-muted-foreground">{opt ? `${opt.label} (${opt.score}/3)` : '—'}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </Card>
 
         {/* Coach Notes */}
