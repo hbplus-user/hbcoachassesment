@@ -31,7 +31,9 @@ const Index = () => {
 
   const renderStep = () => {
     if (step === 0) return <ClientInfoStep />;
-    if (step >= 1 && step <= 5) return <SectionStep section={allSections[step - 1]} />;
+    if (step >= 1 && step <= 3) return <SectionStep section={allSections[step - 1]} />;
+    if (step === 4) return <EnduranceStep />;
+    if (step === 5) return <SectionStep section={allSections[4]} />;
     if (step === 6) return <AmrapStep />;
     if (step === 7) return <CoachNotesStep />;
     return null;
