@@ -968,7 +968,7 @@ export const amrapProtocols: AmrapProtocol[] = [
     exercises: [
       { category: 'Upper Body Push', primaryMovement: 'Push-ups', regressionOption: 'Knee Push-ups', defaultRepsTime: '7 reps', defaultCoachNotes: 'Neutral spine, full ROM' },
       { category: 'Upper Body + Core', primaryMovement: 'Plank to High Plank', regressionOption: 'High Plank Shoulder Taps', defaultRepsTime: '7 reps', defaultCoachNotes: 'Avoid lumbar sag' },
-      { category: 'Lower Body', primaryMovement: 'Split Jumps', regressionOption: 'Backward / Assisted Lunges', defaultRepsTime: '7 ea leg', defaultCoachNotes: 'Knee tracking' },
+      { category: 'Lower Body', primaryMovement: 'Split Jumps', regressionOption: 'Backward / Assisted Lunges', defaultRepsTime: '7 each leg', defaultCoachNotes: 'Knee tracking' },
       { category: 'Core Rotation', primaryMovement: 'Russian Twists', regressionOption: 'Feet on Floor Twists', defaultRepsTime: '7 each side', defaultCoachNotes: 'Avoid lumbar flexion pain' },
       { category: 'Endurance', primaryMovement: 'Burpees', regressionOption: 'Step-back Burpees', defaultRepsTime: '7 reps', defaultCoachNotes: 'Monitor HR' },
       { category: 'Isometric Hold', primaryMovement: 'Beast Hold', regressionOption: 'High Plank Hold', defaultRepsTime: '30 sec', defaultCoachNotes: 'Neutral spine' },
@@ -1132,15 +1132,15 @@ export function getParameterSeverity(param: Parameter, value: string): SeverityL
 export function getStrengthLevelInfo(value: number, param: Parameter, invertScale = false): { level: string, cssClass: string } {
   const b = param.benchmarks;
   if (!b) return { level: 'Beginner', cssClass: 'bg-[hsl(var(--status-issue))]' };
-  
+
   const labels = b.labels || ['Beginner', 'Intermediate', 'Advanced'];
-  
+
   if (invertScale) {
     if (value <= b.advanced) return { level: labels[2], cssClass: 'bg-[hsl(var(--status-pass))] text-white' };
     if (value <= b.intermediate) return { level: labels[1], cssClass: 'bg-[hsl(var(--status-restricted))] text-white' };
     return { level: labels[0], cssClass: 'bg-[hsl(var(--status-issue))] text-white' };
   }
-  
+
   if (value >= b.advanced) return { level: labels[2], cssClass: 'bg-[hsl(var(--status-pass))] text-white' };
   else if (value >= b.intermediate) return { level: labels[1], cssClass: 'bg-[hsl(var(--status-restricted))] text-white' };
   else if (value >= b.beginner) return { level: labels[0], cssClass: 'bg-[hsl(var(--status-issue))] text-white' };
@@ -1177,9 +1177,9 @@ export function getSectionStatus(section: Section, dropdownResults: Record<strin
       if (val !== undefined) {
         const invertScale = param.id === 'counting_breath_rate';
         if (invertScale) {
-           if (val > param.benchmarks.intermediate) hasRestricted = true;
+          if (val > param.benchmarks.intermediate) hasRestricted = true;
         } else {
-           if (val < param.benchmarks.intermediate) hasRestricted = true;
+          if (val < param.benchmarks.intermediate) hasRestricted = true;
         }
       }
     }
@@ -1281,8 +1281,8 @@ export function calculateOverallScore(results: Record<string, string>, numericRe
         if (val) {
           const option = getParameterOption(param, val);
           if (option) {
-             if (option.severity === 'green') passedScore += 1;
-             else if (option.severity === 'yellow') passedScore += 0.5;
+            if (option.severity === 'green') passedScore += 1;
+            else if (option.severity === 'yellow') passedScore += 0.5;
           }
         }
       } else if (param.type === 'number' && param.benchmarks) {

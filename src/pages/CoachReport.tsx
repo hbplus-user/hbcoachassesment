@@ -1,5 +1,10 @@
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAssessment } from '@/context/AssessmentContext';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 import { allSections, getParameterOption, getStrengthLevelInfo, getSectionStatus, amrapProtocols, isVisible, calculateAge } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +25,11 @@ function SectionResultBadge({ result }: { result: 'pass' | 'limitation' | 'red_f
 
 export default function CoachReport() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const assessmentId = location.state?.assessmentId;
+  const reportRef = useRef<HTMLElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const { clientInfo, dropdownResults, numericResults, testNotes, coachNotes, amrapProtocol, amrapExerciseReps, amrapExerciseNotes } = useAssessment();
   const selectedProtocol = amrapProtocols.find(p => p.id === amrapProtocol) || amrapProtocols[0];
   const gender = clientInfo?.gender?.toLowerCase() || '';
@@ -27,6 +37,72 @@ export default function CoachReport() {
 
   const isVisibleLocally = (target: { id: string; minAge?: number; maxAge?: number }) => {
     return isVisible(target, gender, age);
+  };
+
+  const handleGenerateAndSavePdf = async () => {
+    const element = reportRef.current;
+    if (!element) return;
+    
+    setIsGenerating(true);
+    const toastId = toast.loading('Generating PDF...');
+    
+    try {
+      const opt = {
+        margin:       10,
+        filename:     `assessment_${clientInfo.clientName.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm' as const, format: 'a4', orientation: 'portrait' as const }
+      };
+
+      // Generate the PDF blob
+      const worker = html2pdf().set(opt).from(element);
+      const pdfBlob = await worker.output('blob');
+      
+      // Save it to user's computer
+      await worker.save();
+
+      // Upload to Supabase
+      if (assessmentId) {
+        toast.loading('Uploading to database...', { id: toastId });
+        
+        const fileName = `${assessmentId}_${Date.now()}.pdf`;
+        const { error: uploadError } = await supabase.storage
+          .from('assessment_pdfs')
+          .upload(fileName, pdfBlob, {
+            contentType: 'application/pdf',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error("Storage upload error details:", uploadError);
+          throw uploadError;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('assessment_pdfs')
+          .getPublicUrl(fileName);
+
+        const { error: updateError } = await supabase
+          .from('assessments')
+          .update({ pdf_url: publicUrlData.publicUrl })
+          .eq('id', assessmentId);
+
+        if (updateError) {
+          console.error("DB Update error:", updateError);
+          throw updateError;
+        }
+        
+        toast.success('PDF downloaded and saved to database!', { id: toastId });
+      } else {
+        toast.success('PDF downloaded! (Not saved to DB because assessment ID is missing)', { id: toastId });
+      }
+    } catch (error: any) {
+      console.error('Error with PDF:', error);
+      toast.error(error.message || 'Failed to process PDF. Check console.', { id: toastId });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -37,12 +113,14 @@ export default function CoachReport() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate('/report/client')}>View Client Report</Button>
             <Button variant="outline" onClick={() => navigate('/')}>← Back to Form</Button>
-            <Button onClick={() => window.print()}>🖨️ Print / PDF</Button>
+            <Button onClick={handleGenerateAndSavePdf} disabled={isGenerating}>
+              {isGenerating ? 'Processing...' : '🖨️ Download & Save PDF'}
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <main ref={reportRef} className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         {/* Client Info */}
         <Card className="p-6">
           <h2 className="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">Client Information</h2>

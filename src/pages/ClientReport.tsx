@@ -55,7 +55,10 @@ export default function ClientReport() {
         {/* Client Details */}
         <Card className="p-6">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-foreground">HB Health Assessment</h2>
+            <h2 className="text-2xl font-bold text-foreground flex items-center justify-center">
+              <img src="/Favicon.svg" alt="HB Logo" className="h-12 w-auto mr-3" />
+              Health Assessment
+            </h2>
             <p className="text-muted-foreground">Personal Fitness Report</p>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">

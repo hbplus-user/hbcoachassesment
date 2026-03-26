@@ -52,19 +52,23 @@ const Index = () => {
     setIsSubmitting(true);
     try {
       // Save data to Supabase
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('assessments')
         .insert([{
           client_name: clientInfo.clientName,
           coach_name: clientInfo.coachName,
           date: clientInfo.date,
           data: contextData // Save entire assessment context as JSONB
-        }]);
+        }])
+        .select('id')
+        .single();
 
       if (error) throw error;
       
+      const insertedId = data?.id;
+      
       toast.success('Assessment saved successfully!');
-      navigate('/report/coach');
+      navigate('/report/coach', { state: { assessmentId: insertedId } });
     } catch (error) {
       console.error('Error saving assessment:', error);
       toast.error('Failed to save assessment. Proceeding to report anyway.');
@@ -81,7 +85,10 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h1 className="text-xl font-bold text-foreground tracking-tight">HB Health Assessment</h1>
+              <h1 className="text-xl font-bold text-foreground tracking-tight flex items-center">
+                <img src="/Favicon.svg" alt="HB Logo" className="h-10 w-auto mr-2" />
+                Health Assessment
+              </h1>
               <p className="text-sm text-muted-foreground">Step {step + 1} of {totalSteps} — {STEP_LABELS[step]}</p>
             </div>
             <div className="flex gap-1">
