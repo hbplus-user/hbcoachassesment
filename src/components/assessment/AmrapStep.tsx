@@ -95,7 +95,7 @@ export function AmrapStep() {
               <div className="md:col-span-2">
                 <Input
                   value={amrapExerciseReps[key] ?? exercise.defaultRepsTime}
-                  onChange={e => setAmrapExerciseRep(key, e.target.value)}
+                  readOnly
                   className="h-8 text-sm"
                   placeholder={exercise.defaultRepsTime}
                 />
@@ -103,7 +103,7 @@ export function AmrapStep() {
               <div className="md:col-span-3">
                 <Input
                   value={amrapExerciseNotes[key] ?? exercise.defaultCoachNotes}
-                  onChange={e => setAmrapExerciseNote(key, e.target.value)}
+                  readOnly
                   className="h-8 text-sm"
                   placeholder={exercise.defaultCoachNotes}
                 />
