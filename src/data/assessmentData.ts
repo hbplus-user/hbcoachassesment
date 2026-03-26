@@ -795,17 +795,7 @@ export const enduranceSection: Section = {
           id: 'bht_male',
           name: 'Breath-Hold (BHT)',
           parameters: [
-            {
-              id: 'bht_male_time',
-              name: 'Duration',
-              type: 'dropdown',
-              options: [
-                opt('< 25 sec', '< 25', 'red', 'Low'),
-                opt('25–40 sec', '25-40', 'yellow', 'Average'),
-                opt('40–60 sec', '40-60', 'green', 'Good'),
-                opt('60+ sec', '60+', 'green', 'Very Good'),
-              ],
-            },
+            { id: 'breath_hold_time', name: 'Duration', type: 'number', unit: 'sec' }
           ],
         },
       ],
@@ -818,17 +808,7 @@ export const enduranceSection: Section = {
           id: 'bht_female',
           name: 'Breath-Hold (BHT)',
           parameters: [
-            {
-              id: 'bht_female_time',
-              name: 'Duration',
-              type: 'dropdown',
-              options: [
-                opt('< 20 sec', '< 20', 'red', 'Low'),
-                opt('20–35 sec', '20-35', 'yellow', 'Average'),
-                opt('35–50 sec', '35-50', 'green', 'Good'),
-                opt('50+ sec', '50+', 'green', 'Very Good'),
-              ],
-            },
+            { id: 'breath_hold_time', name: 'Duration', type: 'number', unit: 'sec' }
           ],
         },
       ],
@@ -841,17 +821,7 @@ export const enduranceSection: Section = {
           id: 'counting_test',
           name: 'Counting Test',
           parameters: [
-            {
-              id: 'counting_test_score',
-              name: 'Score',
-              type: 'dropdown',
-              options: [
-                opt('< 20', '< 20', 'red', 'Poor Control'),
-                opt('20–40', '20-40', 'yellow', 'Average'),
-                opt('40–60', '40-60', 'green', 'Good'),
-                opt('> 60', '> 60', 'green', 'Excellent'),
-              ],
-            },
+            { id: 'counting_breath_rate', name: 'Score', type: 'number', unit: 'count' }
           ],
         },
       ],
@@ -860,30 +830,14 @@ export const enduranceSection: Section = {
       id: 'sit_to_stand_male',
       name: 'Sit-to-Stand (Male)',
       tests: [
-        { id: 'sts_m_8_14', name: '30-sec STS', minAge: 0, maxAge: 14, parameters: [{ id: 'p_sts_m_8_14', name: 'Repetitions', type: 'dropdown', options: [opt('< 15 reps', '< 15', 'red', 'Inadequate'), opt('15+ reps', '15+', 'green', 'Adequate')] }] },
-        { id: 'sts_m_15_19', name: '30-sec STS', minAge: 15, maxAge: 19, parameters: [{ id: 'p_sts_m_15_19', name: 'Repetitions', type: 'dropdown', options: [opt('< 18 reps', '< 18', 'red', 'Inadequate'), opt('18+ reps', '18+', 'green', 'Adequate')] }] },
-        { id: 'sts_m_20_29', name: '30-sec STS', minAge: 20, maxAge: 29, parameters: [{ id: 'p_sts_m_20_29', name: 'Repetitions', type: 'dropdown', options: [opt('< 14 reps', '< 14', 'red', 'Inadequate'), opt('14+ reps', '14+', 'green', 'Adequate')] }] },
-        { id: 'sts_m_30_39', name: '30-sec STS', minAge: 30, maxAge: 39, parameters: [{ id: 'p_sts_m_30_39', name: 'Repetitions', type: 'dropdown', options: [opt('< 14 reps', '< 14', 'red', 'Inadequate'), opt('14+ reps', '14+', 'green', 'Adequate')] }] },
-        { id: 'sts_m_40_49', name: '30-sec STS', minAge: 40, maxAge: 49, parameters: [{ id: 'p_sts_m_40_49', name: 'Repetitions', type: 'dropdown', options: [opt('< 13 reps', '< 13', 'red', 'Inadequate'), opt('13+ reps', '13+', 'green', 'Adequate')] }] },
-        { id: 'sts_m_50_59', name: '30-sec STS', minAge: 50, maxAge: 59, parameters: [{ id: 'p_sts_m_50_59', name: 'Repetitions', type: 'dropdown', options: [opt('< 12 reps', '< 12', 'red', 'Inadequate'), opt('12+ reps', '12+', 'green', 'Adequate')] }] },
-        { id: 'sts_m_60_69', name: '30-sec STS', minAge: 60, maxAge: 69, parameters: [{ id: 'p_sts_m_60_69', name: 'Repetitions', type: 'dropdown', options: [opt('< 11 reps', '< 11', 'red', 'Inadequate'), opt('11+ reps', '11+', 'green', 'Adequate')] }] },
-        { id: 'sts_m_70_79', name: '30-sec STS', minAge: 70, maxAge: 79, parameters: [{ id: 'p_sts_m_70_79', name: 'Repetitions', type: 'dropdown', options: [opt('< 10 reps', '< 10', 'red', 'Inadequate'), opt('10+ reps', '10+', 'green', 'Adequate')] }] },
-        { id: 'sts_m_80_plus', name: '30-sec STS', minAge: 80, maxAge: 150, parameters: [{ id: 'p_sts_m_80_plus', name: 'Repetitions', type: 'dropdown', options: [opt('< 8 reps', '< 8', 'red', 'Inadequate'), opt('8+ reps', '8+', 'green', 'Adequate')] }] },
+        { id: 'sts_m_all', name: '30-sec STS', parameters: [{ id: 'sit_to_stand_reps', name: 'Repetitions', type: 'number', unit: 'reps' }] }
       ],
     },
     {
       id: 'sit_to_stand_female',
       name: 'Sit-to-Stand (Female)',
       tests: [
-        { id: 'sts_f_7_12', name: '30-sec STS', minAge: 0, maxAge: 12, parameters: [{ id: 'p_sts_f_7_12', name: 'Repetitions', type: 'dropdown', options: [opt('< 13 reps', '< 13', 'red', 'Inadequate'), opt('13+ reps', '13+', 'green', 'Adequate')] }] },
-        { id: 'sts_f_13_19', name: '30-sec STS', minAge: 13, maxAge: 19, parameters: [{ id: 'p_sts_f_13_19', name: 'Repetitions', type: 'dropdown', options: [opt('< 16 reps', '< 16', 'red', 'Inadequate'), opt('16+ reps', '16+', 'green', 'Adequate')] }] },
-        { id: 'sts_f_20_29', name: '30-sec STS', minAge: 20, maxAge: 29, parameters: [{ id: 'p_sts_f_20_29', name: 'Repetitions', type: 'dropdown', options: [opt('< 12 reps', '< 12', 'red', 'Inadequate'), opt('12+ reps', '12+', 'green', 'Adequate')] }] },
-        { id: 'sts_f_30_39', name: '30-sec STS', minAge: 30, maxAge: 39, parameters: [{ id: 'p_sts_f_30_39', name: 'Repetitions', type: 'dropdown', options: [opt('< 12 reps', '< 12', 'red', 'Inadequate'), opt('12+ reps', '12+', 'green', 'Adequate')] }] },
-        { id: 'sts_f_40_49', name: '30-sec STS', minAge: 40, maxAge: 49, parameters: [{ id: 'p_sts_f_40_49', name: 'Repetitions', type: 'dropdown', options: [opt('< 11 reps', '< 11', 'red', 'Inadequate'), opt('11+ reps', '11+', 'green', 'Adequate')] }] },
-        { id: 'sts_f_50_59', name: '30-sec STS', minAge: 50, maxAge: 59, parameters: [{ id: 'p_sts_f_50_59', name: 'Repetitions', type: 'dropdown', options: [opt('< 10 reps', '< 10', 'red', 'Inadequate'), opt('10+ reps', '10+', 'green', 'Adequate')] }] },
-        { id: 'sts_f_60_69', name: '30-sec STS', minAge: 60, maxAge: 69, parameters: [{ id: 'p_sts_f_60_69', name: 'Repetitions', type: 'dropdown', options: [opt('< 9 reps', '< 9', 'red', 'Inadequate'), opt('9+ reps', '9+', 'green', 'Adequate')] }] },
-        { id: 'sts_f_70_79', name: '30-sec STS', minAge: 70, maxAge: 79, parameters: [{ id: 'p_sts_f_70_79', name: 'Repetitions', type: 'dropdown', options: [opt('< 8 reps', '< 8', 'red', 'Inadequate'), opt('8+ reps', '8+', 'green', 'Adequate')] }] },
-        { id: 'sts_f_80_plus', name: '30-sec STS', minAge: 80, maxAge: 150, parameters: [{ id: 'p_sts_f_80_plus', name: 'Repetitions', type: 'dropdown', options: [opt('< 7 reps', '< 7', 'red', 'Inadequate'), opt('7+ reps', '7+', 'green', 'Adequate')] }] },
+        { id: 'sts_f_all', name: '30-sec STS', parameters: [{ id: 'sit_to_stand_reps', name: 'Repetitions', type: 'number', unit: 'reps' }] }
       ],
     },
   ],
@@ -1107,16 +1061,6 @@ export const amrapSection: Section = {
   ],
 };
 
-// All sections in order
-export const allSections: Section[] = [
-  mobilitySection,
-  movementSection,
-  strengthSection,
-  enduranceSection,
-  balanceSection,
-  amrapSection,
-];
-
 // ===== Helper functions =====
 
 export function getParameterOption(param: Parameter, value: string): BenchmarkOption | undefined {
@@ -1155,6 +1099,16 @@ export function calculateAge(dobStr?: string): number | undefined {
   const ageDate = new Date(ageDifMs);
   return Math.abs(ageDate.getUTCFullYear() - 1970);
 }
+
+// All sections in order
+export const allSections: Section[] = [
+  mobilitySection,
+  movementSection,
+  strengthSection,
+  enduranceSection,
+  balanceSection,
+  amrapSection,
+];
 
 // Section result: pass / limitation / red_flag
 export function getSectionStatus(section: Section, dropdownResults: Record<string, string>, numericResults: Record<string, number>, gender?: string, age?: number): 'pass' | 'limitation' | 'red_flag' {
@@ -1305,4 +1259,106 @@ export function calculateOverallScore(results: Record<string, string>, numericRe
   }
   if (totalParams === 0) return 0;
   return Math.round((passedScore / totalParams) * 100);
+}
+
+// --- ENDURANCE CALCULATION LOGIC ---
+export type OutputLevel = 'Low' | 'Average' | 'Good' | 'Very Good' | 'Poor Control' | 'Excellent' | 'Inadequate' | 'Adequate';
+
+export interface BenchmarkRange {
+  max?: number;
+  min?: number;
+  label: OutputLevel;
+  color: 'red' | 'yellow' | 'green' | 'emerald';
+}
+
+export interface AgeRow {
+  ageRange: string;
+  ageMin: number;
+  ageMax: number;
+  threshold: number;
+}
+
+export const breathHoldMale: BenchmarkRange[] = [
+  { max: 25, label: 'Low', color: 'red' },
+  { min: 25, max: 40, label: 'Average', color: 'yellow' },
+  { min: 40, max: 60, label: 'Good', color: 'green' },
+  { min: 60, label: 'Very Good', color: 'emerald' },
+];
+
+export const breathHoldFemale: BenchmarkRange[] = [
+  { max: 20, label: 'Low', color: 'red' },
+  { min: 20, max: 35, label: 'Average', color: 'yellow' },
+  { min: 35, max: 50, label: 'Good', color: 'green' },
+  { min: 50, label: 'Very Good', color: 'emerald' },
+];
+
+export const countingBreath: BenchmarkRange[] = [
+  { max: 20, label: 'Poor Control', color: 'red' },
+  { min: 20, max: 40, label: 'Average', color: 'yellow' },
+  { min: 40, max: 60, label: 'Good', color: 'green' },
+  { min: 60, label: 'Excellent', color: 'emerald' },
+];
+
+export const stsAgeMale: AgeRow[] = [
+  { ageRange: '8–14', ageMin: 8, ageMax: 14, threshold: 14 },
+  { ageRange: '10–15', ageMin: 10, ageMax: 15, threshold: 15 },
+  { ageRange: '16–19', ageMin: 16, ageMax: 19, threshold: 17 },
+  { ageRange: '20–29', ageMin: 20, ageMax: 29, threshold: 14 },
+  { ageRange: '30–39', ageMin: 30, ageMax: 39, threshold: 14 },
+  { ageRange: '40–49', ageMin: 40, ageMax: 49, threshold: 13 },
+  { ageRange: '50–59', ageMin: 50, ageMax: 59, threshold: 12 },
+  { ageRange: '60–69', ageMin: 60, ageMax: 69, threshold: 11 },
+  { ageRange: '70–79', ageMin: 70, ageMax: 79, threshold: 10 },
+  { ageRange: '80+', ageMin: 80, ageMax: 120, threshold: 8 },
+];
+
+export const stsAgeFemale: AgeRow[] = [
+  { ageRange: '7–12', ageMin: 7, ageMax: 12, threshold: 12 },
+  { ageRange: '8–13', ageMin: 8, ageMax: 13, threshold: 13 },
+  { ageRange: '9–16', ageMin: 9, ageMax: 16, threshold: 15 },
+  { ageRange: '20–29', ageMin: 20, ageMax: 29, threshold: 12 },
+  { ageRange: '30–39', ageMin: 30, ageMax: 39, threshold: 12 },
+  { ageRange: '40–49', ageMin: 40, ageMax: 49, threshold: 11 },
+  { ageRange: '50–59', ageMin: 50, ageMax: 59, threshold: 10 },
+  { ageRange: '60–69', ageMin: 60, ageMax: 69, threshold: 9 },
+  { ageRange: '70–79', ageMin: 70, ageMax: 79, threshold: 8 },
+  { ageRange: '80+', ageMin: 80, ageMax: 120, threshold: 7 },
+];
+
+export function getBreathHoldOutput(value: number, gender: string): { label: OutputLevel; color: string } {
+  const ranges = gender === 'female' ? breathHoldFemale : breathHoldMale;
+  for (const r of ranges) {
+    if (r.max !== undefined && r.min === undefined && value < r.max) return { label: r.label, color: r.color };
+    if (r.min !== undefined && r.max !== undefined && value >= r.min && value < r.max) return { label: r.label, color: r.color };
+    if (r.min !== undefined && r.max === undefined && value >= r.min) return { label: r.label, color: r.color };
+  }
+  return { label: 'Low', color: 'red' };
+}
+
+export function getCountingBreathOutput(value: number): { label: OutputLevel; color: string } {
+  for (const r of countingBreath) {
+    if (r.max !== undefined && r.min === undefined && value < r.max) return { label: r.label, color: r.color };
+    if (r.min !== undefined && r.max !== undefined && value >= r.min && value < r.max) return { label: r.label, color: r.color };
+    if (r.min !== undefined && r.max === undefined && value >= r.min) return { label: r.label, color: r.color };
+  }
+  return { label: 'Poor Control', color: 'red' };
+}
+
+export function getStsOutput(value: number, gender: string, age: number | null): { label: OutputLevel; color: string; matchedAge?: string } {
+  if (age === null) return { label: 'Inadequate', color: 'red' };
+  const rows = gender === 'female' ? stsAgeFemale : stsAgeMale;
+  const row = rows.find(r => age >= r.ageMin && age <= r.ageMax);
+  if (!row) {
+    const lastRow = rows[rows.length - 1];
+    return {
+      label: value >= lastRow.threshold ? 'Adequate' : 'Inadequate',
+      color: value >= lastRow.threshold ? 'green' : 'red',
+      matchedAge: lastRow.ageRange,
+    };
+  }
+  return {
+    label: value >= row.threshold ? 'Adequate' : 'Inadequate',
+    color: value >= row.threshold ? 'green' : 'red',
+    matchedAge: row.ageRange,
+  };
 }

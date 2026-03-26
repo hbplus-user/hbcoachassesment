@@ -1,20 +1,21 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAssessment } from '@/context/AssessmentContext';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { allSections, getParameterOption, getStrengthLevelInfo, getSectionStatus, amrapProtocols, isVisible, calculateAge } from '@/data/assessmentData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { getBreathHoldOutput, getCountingBreathOutput, getStsOutput } from '@/data/assessmentData';
+import { buildCoachReportHtml } from '@/lib/buildReportHtml';
 
 function StatusBadge({ severity, label }: { severity: string, label: string }) {
-  if (severity === 'green') return <Badge className="bg-[hsl(var(--status-pass))] text-white text-xs">✅ {label}</Badge>;
-  if (severity === 'yellow') return <Badge className="bg-[hsl(var(--status-restricted))] text-white text-xs">⚠️ {label}</Badge>;
-  if (severity === 'red') return <Badge className="bg-[hsl(var(--status-issue))] text-white text-xs">🔴 {label}</Badge>;
-  return <Badge variant="outline" className="text-xs">—</Badge>;
+  const base = 'inline-block text-[10px] font-semibold px-2 py-0.5 rounded text-white leading-tight break-words whitespace-normal max-w-full';
+  if (severity === 'green') return <span className={`${base} bg-[hsl(var(--status-pass))]`}>{label}</span>;
+  if (severity === 'yellow') return <span className={`${base} bg-[hsl(var(--status-restricted))]`}>{label}</span>;
+  if (severity === 'red') return <span className={`${base} bg-[hsl(var(--status-issue))]`}>{label}</span>;
+  return <span className={`${base} bg-muted text-muted-foreground`}>—</span>;
 }
 
 function SectionResultBadge({ result }: { result: 'pass' | 'limitation' | 'red_flag' }) {
@@ -23,14 +24,115 @@ function SectionResultBadge({ result }: { result: 'pass' | 'limitation' | 'red_f
   return <Badge className="bg-[hsl(var(--status-issue))] text-white">🔴 RED FLAG</Badge>;
 }
 
+/** Renders an HTML string into a hidden div, captures it with html2canvas and saves as PDF */
+async function htmlStringToPdfBlob(htmlString: string, filename: string): Promise<Blob> {
+  // @ts-ignore
+  const html2canvas = (await import('html2canvas')).default;
+  // @ts-ignore
+  const { jsPDF } = await import('jspdf');
+
+  const PDF_WIDTH_PX = 794;
+
+  const container = document.createElement('div');
+  container.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: ${PDF_WIDTH_PX}px;
+    background: white;
+    z-index: -99999;
+    pointer-events: none;
+    overflow: visible;
+  `;
+  container.innerHTML = htmlString;
+  document.body.appendChild(container);
+
+  // Wait for images and fonts to load
+  await new Promise(resolve => setTimeout(resolve, 500)); 
+
+  try {
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 8;
+    const usableW = pageW - margin * 2;
+
+    const sections = Array.from(container.querySelectorAll('.pdf-section'));
+    let currentY = margin;
+    let isFirstPage = true;
+
+    for (let i = 0; i < sections.length; i++) {
+      const el = sections[i] as HTMLElement;
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgPixelW = canvas.width / 2;
+      const mmPerPx = usableW / imgPixelW;
+      const sectionHeightMm = (canvas.height / 2) * mmPerPx;
+
+      // If the section exceeds the remaining page height, start a new page
+      // unless it's the very first item on a fresh page (to avoid endless blank pages if an item is bigger than 1 page)
+      if (currentY + sectionHeightMm > pageH - margin) {
+        if (!isFirstPage && currentY > margin) {
+          pdf.addPage();
+          currentY = margin;
+        }
+      }
+
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', margin, currentY, usableW, sectionHeightMm);
+      currentY += sectionHeightMm + 4; // Add a small 4mm gap between cards
+      isFirstPage = false;
+    }
+
+    pdf.save(filename);
+    return pdf.output('blob');
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+
 export default function CoachReport() {
   const navigate = useNavigate();
   const location = useLocation();
-  const assessmentId = location.state?.assessmentId;
+  const searchParams = new URLSearchParams(location.search);
+  const paramId = searchParams.get('id');
+  const assessmentId = location.state?.assessmentId || paramId;
   const reportRef = useRef<HTMLElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
-  const { clientInfo, dropdownResults, numericResults, testNotes, coachNotes, amrapProtocol, amrapExerciseReps, amrapExerciseNotes } = useAssessment();
+  const assessmentCtx = useAssessment();
+  const { clientInfo, dropdownResults, numericResults, testNotes, coachNotes, amrapProtocol, amrapExerciseReps, amrapExerciseNotes, loadFullState } = assessmentCtx;
+
+  useEffect(() => {
+    if (paramId && !clientInfo.clientName) {
+      const loadData = async () => {
+        setIsLoadingData(true);
+        try {
+          const { data, error } = await supabase.from('assessments').select('data').eq('id', paramId).single();
+          if (error) throw error;
+          if (data && data.data) {
+            loadFullState(data.data as any);
+          }
+        } catch (err) {
+          console.error('Error loading assessment data:', err);
+          toast.error('Failed to load assessment data');
+        } finally {
+          setIsLoadingData(false);
+        }
+      };
+      loadData();
+    }
+  }, [paramId, clientInfo.clientName, loadFullState]);
+
+  if (isLoadingData) {
+    return <div className="min-h-screen flex items-center justify-center bg-background"><div className="text-xl font-semibold text-muted-foreground animate-pulse">Loading assessment data...</div></div>;
+  }
   const selectedProtocol = amrapProtocols.find(p => p.id === amrapProtocol) || amrapProtocols[0];
   const gender = clientInfo?.gender?.toLowerCase() || '';
   const age = calculateAge(clientInfo?.dob);
@@ -40,73 +142,55 @@ export default function CoachReport() {
   };
 
   const handleGenerateAndSavePdf = async () => {
-    const element = reportRef.current;
-    if (!element) return;
-    
     setIsGenerating(true);
-    const toastId = toast.loading('Generating PDF...');
-    
+    const toastId = toast.loading('Generating PDFs...');
+
     try {
-      const opt = {
-        margin:       10,
-        filename:     `assessment_${clientInfo.clientName.replace(/\s+/g, '_')}.pdf`,
-        image:        { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm' as const, format: 'a4', orientation: 'portrait' as const }
-      };
+      toast.loading('Generating Coach PDF...', { id: toastId });
+      const coachHtml = buildCoachReportHtml(assessmentCtx);
+      const coachFilename = `${clientInfo.clientName.replace(/\s+/g, '_')}_Coach_Report.pdf`;
+      const coachPdfBlob = await htmlStringToPdfBlob(coachHtml, coachFilename);
 
-      // Generate the PDF blob
-      const worker = html2pdf().set(opt).from(element);
-      const pdfBlob = await worker.output('blob');
-      
-      // Save it to user's computer
-      await worker.save();
+      toast.loading('Generating Client PDF...', { id: toastId });
+      const clientHtml = buildCoachReportHtml(assessmentCtx, { isClientReport: true });
+      const clientFilename = `${clientInfo.clientName.replace(/\s+/g, '_')}_Client_Report.pdf`;
+      const clientPdfBlob = await htmlStringToPdfBlob(clientHtml, clientFilename);
 
-      // Upload to Supabase
-      if (assessmentId) {
+      if (assessmentId && clientPdfBlob) {
         toast.loading('Uploading to database...', { id: toastId });
-        
-        const fileName = `${assessmentId}_${Date.now()}.pdf`;
-        const { error: uploadError } = await supabase.storage
+        const clientFileName = `${assessmentId}_client_${Date.now()}.pdf`;
+        const { error: clientUploadError } = await supabase.storage
           .from('assessment_pdfs')
-          .upload(fileName, pdfBlob, {
-            contentType: 'application/pdf',
-            upsert: false
-          });
+          .upload(clientFileName, clientPdfBlob, { contentType: 'application/pdf', upsert: false });
+        if (clientUploadError) throw clientUploadError;
 
-        if (uploadError) {
-          console.error("Storage upload error details:", uploadError);
-          throw uploadError;
-        }
-
-        const { data: publicUrlData } = supabase.storage
+        const coachFileName = `${assessmentId}_coach_${Date.now()}.pdf`;
+        const { error: coachUploadError } = await supabase.storage
           .from('assessment_pdfs')
-          .getPublicUrl(fileName);
+          .upload(coachFileName, coachPdfBlob, { contentType: 'application/pdf', upsert: false });
+        if (coachUploadError) throw coachUploadError;
 
+        const { data: publicUrlData } = supabase.storage.from('assessment_pdfs').getPublicUrl(coachFileName);
         const { error: updateError } = await supabase
           .from('assessments')
           .update({ pdf_url: publicUrlData.publicUrl })
           .eq('id', assessmentId);
+        if (updateError) throw updateError;
 
-        if (updateError) {
-          console.error("DB Update error:", updateError);
-          throw updateError;
-        }
-        
-        toast.success('PDF downloaded and saved to database!', { id: toastId });
+        toast.success('Both PDFs downloaded and saved!', { id: toastId });
       } else {
-        toast.success('PDF downloaded! (Not saved to DB because assessment ID is missing)', { id: toastId });
+        toast.success('PDF downloaded!', { id: toastId });
       }
     } catch (error: any) {
       console.error('Error with PDF:', error);
-      toast.error(error.message || 'Failed to process PDF. Check console.', { id: toastId });
+      toast.error(error.message || 'Failed to generate PDF.', { id: toastId });
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
       <header className="border-b border-border bg-card no-print">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">Coach Detailed Report</h1>
@@ -124,7 +208,7 @@ export default function CoachReport() {
         {/* Client Info */}
         <Card className="p-6">
           <h2 className="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">Client Information</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div><span className="font-semibold text-muted-foreground">Client:</span> <span className="text-foreground">{clientInfo.clientName || '—'}</span></div>
             <div><span className="font-semibold text-muted-foreground">Coach:</span> <span className="text-foreground">{clientInfo.coachName || '—'}</span></div>
             <div><span className="font-semibold text-muted-foreground">Date:</span> <span className="text-foreground">{clientInfo.date || '—'}</span></div>
@@ -150,15 +234,15 @@ export default function CoachReport() {
               </div>
 
               {/* Table header */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <div className="w-full">
+                <table className="w-full text-sm table-fixed break-words whitespace-normal">
                   <thead>
                     <tr className="border-b border-border text-left">
-                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Component</th>
-                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Test</th>
-                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Parameter</th>
-                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Benchmark / Finding</th>
-                      <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Output</th>
+                      <th className="py-2 px-1 text-muted-foreground font-semibold text-xs uppercase w-[12%]">Component</th>
+                      <th className="py-2 px-1 text-muted-foreground font-semibold text-xs uppercase w-[18%]">Test</th>
+                      <th className="py-2 px-1 text-muted-foreground font-semibold text-xs uppercase w-[18%]">Parameter</th>
+                      <th className="py-2 px-1 text-muted-foreground font-semibold text-xs uppercase w-[30%]">Benchmark / Finding</th>
+                      <th className="py-2 px-1 text-muted-foreground font-semibold text-xs uppercase w-[22%]">Output</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -173,20 +257,37 @@ export default function CoachReport() {
                           const levelInfo = param.type === 'number' && param.benchmarks && numVal !== undefined
                             ? getStrengthLevelInfo(numVal, param, isInvert) : undefined;
 
+                          let enduranceBadge: { label: string; color: string } | null = null;
+                          if (numVal !== undefined) {
+                            if (param.id === 'breath_hold_time') enduranceBadge = getBreathHoldOutput(numVal, gender);
+                            else if (param.id === 'counting_breath_rate') enduranceBadge = getCountingBreathOutput(numVal);
+                            else if (param.id === 'sit_to_stand_reps') enduranceBadge = getStsOutput(numVal, gender, age);
+                          }
+
                           return (
-                            <tr key={param.id} className="border-b border-border/50 hover:bg-muted/30">
-                              <td className="py-2 px-2 text-muted-foreground">{pIdx === 0 ? sub.name : ''}</td>
-                              <td className="py-2 px-2 font-medium text-foreground">{pIdx === 0 ? test.name : ''}</td>
-                              <td className="py-2 px-2 text-foreground">{param.name}</td>
-                              <td className="py-2 px-2 text-foreground">
+                            <tr key={param.id} className="border-b border-border/50">
+                              <td className="py-1.5 px-1 text-muted-foreground text-xs break-words whitespace-normal align-top">{pIdx === 0 ? sub.name : ''}</td>
+                              <td className="py-1.5 px-1 font-medium text-foreground text-xs break-words whitespace-normal align-top">{pIdx === 0 ? test.name : ''}</td>
+                              <td className="py-1.5 px-1 text-foreground text-xs break-words whitespace-normal align-top">{param.name}</td>
+                              <td className="py-1.5 px-1 text-foreground text-xs break-words whitespace-normal align-top">
                                 {selectedLabel || (numVal !== undefined ? `${numVal} ${param.unit || ''}` : '—')}
                               </td>
-                              <td className="py-2 px-2">
-                                {option && <StatusBadge severity={option.severity} label={option.outputFlag} />}
-                                {levelInfo && (
+                              <td className="py-1.5 px-1 align-top">
+                                {enduranceBadge && (
+                                  <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded text-white leading-tight break-words whitespace-normal max-w-full" style={{
+                                    background: enduranceBadge.color === 'red' ? 'hsl(var(--status-issue))' :
+                                    enduranceBadge.color === 'yellow' ? 'hsl(var(--status-restricted))' :
+                                    enduranceBadge.color === 'emerald' ? 'hsl(145,60%,35%)' :
+                                    'hsl(var(--status-pass))'
+                                  }}>
+                                    {enduranceBadge.label}
+                                  </span>
+                                )}
+                                {!enduranceBadge && option && <StatusBadge severity={option.severity} label={option.outputFlag} />}
+                                {!enduranceBadge && levelInfo && (
                                   <Badge className={`text-xs ${levelInfo.cssClass}`}>{levelInfo.level}</Badge>
                                 )}
-                                {!option && !levelInfo && <span className="text-muted-foreground">—</span>}
+                                {!enduranceBadge && !option && !levelInfo && <span className="text-muted-foreground">—</span>}
                               </td>
                             </tr>
                           );
@@ -203,20 +304,39 @@ export default function CoachReport() {
                         const levelInfo = param.type === 'number' && param.benchmarks && numVal !== undefined
                           ? getStrengthLevelInfo(numVal, param, isInvert) : undefined;
 
+                        let enduranceBadge: { label: string; color: string } | null = null;
+                        if (numVal !== undefined) {
+                          if (param.id === 'breath_hold_time') enduranceBadge = getBreathHoldOutput(numVal, gender);
+                          else if (param.id === 'counting_breath_rate') enduranceBadge = getCountingBreathOutput(numVal);
+                          else if (param.id === 'sit_to_stand_reps') enduranceBadge = getStsOutput(numVal, gender, age);
+                        }
+
                         return (
-                          <tr key={param.id} className="border-b border-border/50 hover:bg-muted/30">
-                            <td className="py-2 px-2 text-muted-foreground">{section.component}</td>
-                            <td className="py-2 px-2 font-medium text-foreground">{pIdx === 0 ? test.name : ''}</td>
-                            <td className="py-2 px-2 text-foreground">{param.name}</td>
-                            <td className="py-2 px-2 text-foreground">
+                          <tr key={param.id} className="border-b border-border/50">
+                            <td className="py-1.5 px-1 text-muted-foreground text-xs break-words whitespace-normal align-top">{section.component}</td>
+                            <td className="py-1.5 px-1 font-medium text-foreground text-xs break-words whitespace-normal align-top">{pIdx === 0 ? test.name : ''}</td>
+                            <td className="py-1.5 px-1 text-foreground text-xs break-words whitespace-normal align-top">{param.name}</td>
+                            <td className="py-1.5 px-1 text-foreground text-xs break-words whitespace-normal align-top">
                               {selectedLabel || (numVal !== undefined ? `${numVal} ${param.unit || ''}` : '—')}
                             </td>
-                            <td className="py-2 px-2">
-                              {option && <StatusBadge severity={option.severity} label={option.outputFlag} />}
-                              {levelInfo && (
-                                <Badge className={`text-xs ${levelInfo.cssClass}`}>{levelInfo.level}</Badge>
+                            <td className="py-1.5 px-1 align-top">
+                              {enduranceBadge && (
+                                <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded text-white leading-tight break-words whitespace-normal max-w-full" style={{
+                                  background: enduranceBadge.color === 'red' ? 'hsl(var(--status-issue))' :
+                                  enduranceBadge.color === 'yellow' ? 'hsl(var(--status-restricted))' :
+                                  enduranceBadge.color === 'emerald' ? 'hsl(145,60%,35%)' :
+                                  'hsl(var(--status-pass))'
+                                }}>
+                                  {enduranceBadge.label}
+                                </span>
                               )}
-                              {!option && !levelInfo && <span className="text-muted-foreground">—</span>}
+                              {!enduranceBadge && option && <StatusBadge severity={option.severity} label={option.outputFlag} />}
+                              {!enduranceBadge && levelInfo && (
+                                <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded text-white leading-tight break-words whitespace-normal max-w-full" style={{ background: levelInfo.cssClass.includes('green') ? 'hsl(var(--status-pass))' : levelInfo.cssClass.includes('yellow') ? 'hsl(var(--status-restricted))' : 'hsl(var(--status-issue))' }}>
+                                  {levelInfo.level}
+                                </span>
+                              )}
+                              {!enduranceBadge && !option && !levelInfo && <span className="text-muted-foreground text-xs">—</span>}
                             </td>
                           </tr>
                         );
@@ -250,15 +370,15 @@ export default function CoachReport() {
         {/* AMRAP Exercise Protocol */}
         <Card className="p-6 print-break">
           <h2 className="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">⏱️ AMRAP Protocol: {selectedProtocol.name}</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="w-full">
+            <table className="w-full text-sm table-fixed break-words whitespace-normal">
               <thead>
                 <tr className="border-b border-border text-left">
-                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Category</th>
-                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Primary Movement</th>
-                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Regression</th>
-                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Reps / Time</th>
-                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase">Coach Notes</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase w-[15%]">Category</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase w-[25%]">Primary Movement</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase w-[25%]">Regression</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase w-[15%]">Reps / Time</th>
+                  <th className="py-2 px-2 text-muted-foreground font-semibold text-xs uppercase w-[20%]">Coach Notes</th>
                 </tr>
               </thead>
               <tbody>
@@ -266,11 +386,11 @@ export default function CoachReport() {
                   const key = `${amrapProtocol}_${idx}`;
                   return (
                     <tr key={idx} className="border-b border-border/50">
-                      <td className="py-2 px-2 font-medium text-foreground">{ex.category}</td>
-                      <td className="py-2 px-2 text-foreground">{ex.primaryMovement}</td>
-                      <td className="py-2 px-2 text-muted-foreground">{ex.regressionOption}</td>
-                      <td className="py-2 px-2 text-foreground">{amrapExerciseReps[key] || ex.defaultRepsTime}</td>
-                      <td className="py-2 px-2 text-muted-foreground italic">{amrapExerciseNotes[key] || ex.defaultCoachNotes}</td>
+                      <td className="py-2 px-2 font-medium text-foreground break-words whitespace-normal align-top">{ex.category}</td>
+                      <td className="py-2 px-2 text-foreground break-words whitespace-normal align-top">{ex.primaryMovement}</td>
+                      <td className="py-2 px-2 text-muted-foreground break-words whitespace-normal align-top">{ex.regressionOption}</td>
+                      <td className="py-2 px-2 text-foreground break-words whitespace-normal align-top">{amrapExerciseReps[key] || ex.defaultRepsTime}</td>
+                      <td className="py-2 px-2 text-muted-foreground italic break-words whitespace-normal align-top">{amrapExerciseNotes[key] || ex.defaultCoachNotes}</td>
                     </tr>
                   );
                 })}

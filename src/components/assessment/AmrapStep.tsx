@@ -96,16 +96,16 @@ export function AmrapStep() {
                 <Input
                   value={amrapExerciseReps[key] ?? exercise.defaultRepsTime}
                   readOnly
-                  className="h-8 text-sm"
-                  placeholder={exercise.defaultRepsTime}
+                  className="h-8 text-sm cursor-default focus-visible:ring-0"
+                  tabIndex={-1}
                 />
               </div>
               <div className="md:col-span-3">
                 <Input
                   value={amrapExerciseNotes[key] ?? exercise.defaultCoachNotes}
                   readOnly
-                  className="h-8 text-sm"
-                  placeholder={exercise.defaultCoachNotes}
+                  className="h-8 text-sm cursor-default focus-visible:ring-0"
+                  tabIndex={-1}
                 />
               </div>
             </div>

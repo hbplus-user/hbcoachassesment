@@ -37,6 +37,7 @@ interface AssessmentContextType extends AssessmentState {
   setAmrapProtocol: (protocol: string) => void;
   setAmrapExerciseNote: (key: string, note: string) => void;
   setAmrapExerciseRep: (key: string, rep: string) => void;
+  loadFullState: (data: Partial<AssessmentState>) => void;
 }
 
 const AssessmentContext = createContext<AssessmentContextType | undefined>(undefined);
@@ -74,12 +75,23 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
     setAmrapExerciseReps(prev => ({ ...prev, [key]: rep }));
   };
 
+  const loadFullState = (data: Partial<AssessmentState>) => {
+    if (data.clientInfo) setClientInfo(data.clientInfo);
+    if (data.dropdownResults) setDropdownResults(data.dropdownResults);
+    if (data.numericResults) setNumericResults(data.numericResults);
+    if (data.testNotes) setTestNotes(data.testNotes);
+    if (data.coachNotes) setCoachNotes(data.coachNotes);
+    if (data.amrapProtocol) setAmrapProtocol(data.amrapProtocol);
+    if (data.amrapExerciseNotes) setAmrapExerciseNotes(data.amrapExerciseNotes);
+    if (data.amrapExerciseReps) setAmrapExerciseReps(data.amrapExerciseReps);
+  };
+
   return (
     <AssessmentContext.Provider value={{
       clientInfo, dropdownResults, numericResults, testNotes, coachNotes, currentStep,
       amrapProtocol, amrapExerciseNotes, amrapExerciseReps,
       setClientInfo, setDropdownResult, setNumericResult, setTestNote, setCoachNotes, setCurrentStep,
-      setAmrapProtocol, setAmrapExerciseNote, setAmrapExerciseRep,
+      setAmrapProtocol, setAmrapExerciseNote, setAmrapExerciseRep, loadFullState
     }}>
       {children}
     </AssessmentContext.Provider>

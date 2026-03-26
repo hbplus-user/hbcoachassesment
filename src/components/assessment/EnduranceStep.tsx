@@ -2,6 +2,16 @@ import { useAssessment } from '@/context/AssessmentContext';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { 
+  getBreathHoldOutput, 
+  getCountingBreathOutput, 
+  getStsOutput,
+  breathHoldMale,
+  breathHoldFemale,
+  countingBreath,
+  stsAgeMale,
+  stsAgeFemale
+} from '@/data/assessmentData';
 
 function getAge(dob: string): number | null {
   if (!dob) return null;
@@ -11,111 +21,6 @@ function getAge(dob: string): number | null {
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age;
-}
-
-type OutputLevel = 'Low' | 'Average' | 'Good' | 'Very Good' | 'Poor Control' | 'Excellent' | 'Inadequate' | 'Adequate';
-
-interface BenchmarkRange {
-  max?: number;
-  min?: number;
-  label: OutputLevel;
-  color: 'red' | 'yellow' | 'green' | 'emerald';
-}
-
-interface AgeRow {
-  ageRange: string;
-  ageMin: number;
-  ageMax: number;
-  threshold: number; // >= this = adequate
-}
-
-// Breath Hold benchmarks
-const breathHoldMale: BenchmarkRange[] = [
-  { max: 25, label: 'Low', color: 'red' },
-  { min: 25, max: 40, label: 'Average', color: 'yellow' },
-  { min: 40, max: 60, label: 'Good', color: 'green' },
-  { min: 60, label: 'Very Good', color: 'emerald' },
-];
-
-const breathHoldFemale: BenchmarkRange[] = [
-  { max: 20, label: 'Low', color: 'red' },
-  { min: 20, max: 35, label: 'Average', color: 'yellow' },
-  { min: 35, max: 50, label: 'Good', color: 'green' },
-  { min: 50, label: 'Very Good', color: 'emerald' },
-];
-
-// Counting Breath benchmarks (all ages/genders)
-const countingBreath: BenchmarkRange[] = [
-  { max: 20, label: 'Poor Control', color: 'red' },
-  { min: 20, max: 40, label: 'Average', color: 'yellow' },
-  { min: 40, max: 60, label: 'Good', color: 'green' },
-  { min: 60, label: 'Excellent', color: 'emerald' },
-];
-
-// Sit-to-Stand benchmarks by age and gender
-const stsAgeMale: AgeRow[] = [
-  { ageRange: '8–14', ageMin: 8, ageMax: 14, threshold: 14 },
-  { ageRange: '10–15', ageMin: 10, ageMax: 15, threshold: 15 },
-  { ageRange: '16–19', ageMin: 16, ageMax: 19, threshold: 17 },
-  { ageRange: '20–29', ageMin: 20, ageMax: 29, threshold: 14 },
-  { ageRange: '30–39', ageMin: 30, ageMax: 39, threshold: 14 },
-  { ageRange: '40–49', ageMin: 40, ageMax: 49, threshold: 13 },
-  { ageRange: '50–59', ageMin: 50, ageMax: 59, threshold: 12 },
-  { ageRange: '60–69', ageMin: 60, ageMax: 69, threshold: 11 },
-  { ageRange: '70–79', ageMin: 70, ageMax: 79, threshold: 10 },
-  { ageRange: '80+', ageMin: 80, ageMax: 120, threshold: 8 },
-];
-
-const stsAgeFemale: AgeRow[] = [
-  { ageRange: '7–12', ageMin: 7, ageMax: 12, threshold: 12 },
-  { ageRange: '8–13', ageMin: 8, ageMax: 13, threshold: 13 },
-  { ageRange: '9–16', ageMin: 9, ageMax: 16, threshold: 15 },
-  { ageRange: '20–29', ageMin: 20, ageMax: 29, threshold: 12 },
-  { ageRange: '30–39', ageMin: 30, ageMax: 39, threshold: 12 },
-  { ageRange: '40–49', ageMin: 40, ageMax: 49, threshold: 11 },
-  { ageRange: '50–59', ageMin: 50, ageMax: 59, threshold: 10 },
-  { ageRange: '60–69', ageMin: 60, ageMax: 69, threshold: 9 },
-  { ageRange: '70–79', ageMin: 70, ageMax: 79, threshold: 8 },
-  { ageRange: '80+', ageMin: 80, ageMax: 120, threshold: 7 },
-];
-
-function getBreathHoldOutput(value: number, gender: string): { label: OutputLevel; color: string } {
-  const ranges = gender === 'female' ? breathHoldFemale : breathHoldMale;
-  for (const r of ranges) {
-    if (r.max !== undefined && r.min === undefined && value < r.max) return { label: r.label, color: r.color };
-    if (r.min !== undefined && r.max !== undefined && value >= r.min && value < r.max) return { label: r.label, color: r.color };
-    if (r.min !== undefined && r.max === undefined && value >= r.min) return { label: r.label, color: r.color };
-  }
-  return { label: 'Low', color: 'red' };
-}
-
-function getCountingBreathOutput(value: number): { label: OutputLevel; color: string } {
-  for (const r of countingBreath) {
-    if (r.max !== undefined && r.min === undefined && value < r.max) return { label: r.label, color: r.color };
-    if (r.min !== undefined && r.max !== undefined && value >= r.min && value < r.max) return { label: r.label, color: r.color };
-    if (r.min !== undefined && r.max === undefined && value >= r.min) return { label: r.label, color: r.color };
-  }
-  return { label: 'Poor Control', color: 'red' };
-}
-
-function getStsOutput(value: number, gender: string, age: number | null): { label: OutputLevel; color: string; matchedAge?: string } {
-  if (age === null) return { label: 'Inadequate', color: 'red' };
-  const rows = gender === 'female' ? stsAgeFemale : stsAgeMale;
-  const row = rows.find(r => age >= r.ageMin && age <= r.ageMax);
-  if (!row) {
-    // Default to last row if age is beyond range
-    const lastRow = rows[rows.length - 1];
-    return {
-      label: value >= lastRow.threshold ? 'Adequate' : 'Inadequate',
-      color: value >= lastRow.threshold ? 'green' : 'red',
-      matchedAge: lastRow.ageRange,
-    };
-  }
-  return {
-    label: value >= row.threshold ? 'Adequate' : 'Inadequate',
-    color: value >= row.threshold ? 'green' : 'red',
-    matchedAge: row.ageRange,
-  };
 }
 
 const outputColors: Record<string, string> = {
