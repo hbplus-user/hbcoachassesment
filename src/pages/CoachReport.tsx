@@ -9,13 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { getBreathHoldOutput, getCountingBreathOutput, getStsOutput } from '@/data/assessmentData';
 import { buildCoachReportHtml } from '@/lib/buildReportHtml';
+import { cn } from '@/lib/utils';
 
 function StatusBadge({ severity, label }: { severity: string, label: string }) {
-  const base = 'inline-block text-[10px] font-semibold px-2 py-0.5 rounded text-white leading-tight break-words whitespace-normal max-w-full';
-  if (severity === 'green') return <span className={`${base} bg-[hsl(var(--status-pass))]`}>{label}</span>;
-  if (severity === 'yellow') return <span className={`${base} bg-[hsl(var(--status-restricted))]`}>{label}</span>;
-  if (severity === 'red') return <span className={`${base} bg-[hsl(var(--status-issue))]`}>{label}</span>;
-  return <span className={`${base} bg-muted text-muted-foreground`}>—</span>;
+  const base = 'inline-block text-[10px] font-semibold px-2 py-0.5 rounded text-white leading-normal break-words whitespace-normal max-w-full text-center min-w-[50px] align-middle';
+  const color = severity === 'red' ? 'bg-[hsl(var(--status-issue))]' :
+    severity === 'yellow' ? 'bg-[hsl(var(--status-restricted))]' :
+      'bg-[hsl(var(--status-pass))]';
+  return <div className={cn(base, color)}>{label}</div>;
 }
 
 function SectionResultBadge({ result }: { result: 'pass' | 'limitation' | 'red_flag' }) {
@@ -34,6 +35,7 @@ async function htmlStringToPdfBlob(htmlString: string, filename: string): Promis
   const PDF_WIDTH_PX = 794;
 
   const container = document.createElement('div');
+  // Add strict CSS resets so html2canvas doesn't inherit baseline scaling bugs
   container.style.cssText = `
     position: fixed;
     top: 0;
@@ -43,13 +45,23 @@ async function htmlStringToPdfBlob(htmlString: string, filename: string): Promis
     z-index: -99999;
     pointer-events: none;
     overflow: visible;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-size-adjust: none;
   `;
   container.innerHTML = htmlString;
   document.body.appendChild(container);
 
-  // Wait for images and fonts to load
-  await new Promise(resolve => setTimeout(resolve, 500)); 
-
+  // Wait for all fonts to be completely loaded and rendered natively before snapping
+  // @ts-ignore
+  if (document.fonts && document.fonts.ready) {
+    // @ts-ignore
+    await document.fonts.ready;
+  }
+  await new Promise(resolve => setTimeout(resolve, 300)); // Small buffer for DOM paint
   try {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
     const pageW = pdf.internal.pageSize.getWidth();
@@ -66,26 +78,97 @@ async function htmlStringToPdfBlob(htmlString: string, filename: string): Promis
       const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
+        logging: false
       });
-
-      const imgPixelW = canvas.width / 2;
+      const imgPixelW = canvas.width;
       const mmPerPx = usableW / imgPixelW;
-      const sectionHeightMm = (canvas.height / 2) * mmPerPx;
 
-      // If the section exceeds the remaining page height, start a new page
-      // unless it's the very first item on a fresh page (to avoid endless blank pages if an item is bigger than 1 page)
-      if (currentY + sectionHeightMm > pageH - margin) {
-        if (!isFirstPage && currentY > margin) {
-          pdf.addPage();
-          currentY = margin;
+      // Calculate safe pixel boundaries based on DOM rows inside this section
+      // html2canvas uses scale=2, so DOM pixels * 2 = Canvas pixels
+      const elRect = el.getBoundingClientRect();
+      const rows = Array.from(el.querySelectorAll('.pdf-row'));
+      const pageBreakPointsPx = rows.map(r => {
+        const rRect = r.getBoundingClientRect();
+        // The safe cut point is the bottom of the row
+        return Math.floor((rRect.bottom - elRect.top) * 2);
+      });
+      // Always add the very bottom of the canvas as the final safe point
+      pageBreakPointsPx.push(canvas.height);
+      pageBreakPointsPx.sort((a, b) => a - b);
+
+      let remainingHeightPx = canvas.height;
+      let currentPixelY = 0;
+
+      while (remainingHeightPx > 0) {
+        const availableMm = pageH - margin - currentY;
+        const maxAvailablePx = Math.floor(availableMm / mmPerPx);
+
+        if (maxAvailablePx >= remainingHeightPx) {
+          // Fits perfectly on the remainder of this page
+          const sliceHeightPx = remainingHeightPx;
+          const sliceMm = sliceHeightPx * mmPerPx;
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = sliceHeightPx;
+          const ctx = sliceCanvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+            ctx.drawImage(canvas, 0, currentPixelY, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+          }
+          pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.96), 'JPEG', margin, currentY, usableW, sliceMm, undefined, 'FAST');
+          currentY += sliceMm + 4;
+          remainingHeightPx = 0;
+          break;
         }
-      }
 
-      pdf.addImage(canvas.toDataURL('image/jpeg', 0.98), 'JPEG', margin, currentY, usableW, sectionHeightMm);
-      currentY += sectionHeightMm + 4; // Add a small 4mm gap between cards
-      isFirstPage = false;
+        // Doesn't fit cleanly, find the largest safe cut point that fits in maxAvailablePx
+        const maxCanvasY = currentPixelY + maxAvailablePx;
+        let bestCutY = currentPixelY;
+
+        for (const pt of pageBreakPointsPx) {
+          if (pt > currentPixelY && pt <= maxCanvasY) {
+            bestCutY = pt;
+          }
+        }
+
+        if (bestCutY === currentPixelY) {
+          // No safe row boundary found. The remaining row is larger than the available space!
+          if (currentY > margin + 10) {
+            // We aren't at the top of the page, so push to the next page to give it more room
+            pdf.addPage();
+            currentY = margin;
+            isFirstPage = false;
+            continue;
+          } else {
+            // It's already at the top of the page and still doesn't fit (massive row). We have to hard-slice.
+            bestCutY = maxCanvasY;
+          }
+        }
+
+        const sliceHeightPx = bestCutY - currentPixelY;
+        const sliceMm = sliceHeightPx * mmPerPx;
+
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceHeightPx;
+        const ctx = sliceCanvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+          ctx.drawImage(canvas, 0, currentPixelY, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+        }
+
+        pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.96), 'JPEG', margin, currentY, usableW, sliceMm, undefined, 'FAST');
+
+        currentPixelY = bestCutY;
+        remainingHeightPx -= sliceHeightPx;
+
+        // Since we didn't finish the whole section, we definitively need a new page
+        pdf.addPage();
+        currentY = margin;
+        isFirstPage = false;
+      }
     }
 
     pdf.save(filename);
@@ -276,9 +359,9 @@ export default function CoachReport() {
                                 {enduranceBadge && (
                                   <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded text-white leading-tight break-words whitespace-normal max-w-full" style={{
                                     background: enduranceBadge.color === 'red' ? 'hsl(var(--status-issue))' :
-                                    enduranceBadge.color === 'yellow' ? 'hsl(var(--status-restricted))' :
-                                    enduranceBadge.color === 'emerald' ? 'hsl(145,60%,35%)' :
-                                    'hsl(var(--status-pass))'
+                                      enduranceBadge.color === 'yellow' ? 'hsl(var(--status-restricted))' :
+                                        enduranceBadge.color === 'emerald' ? 'hsl(145,60%,35%)' :
+                                          'hsl(var(--status-pass))'
                                   }}>
                                     {enduranceBadge.label}
                                   </span>
@@ -323,9 +406,9 @@ export default function CoachReport() {
                               {enduranceBadge && (
                                 <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded text-white leading-tight break-words whitespace-normal max-w-full" style={{
                                   background: enduranceBadge.color === 'red' ? 'hsl(var(--status-issue))' :
-                                  enduranceBadge.color === 'yellow' ? 'hsl(var(--status-restricted))' :
-                                  enduranceBadge.color === 'emerald' ? 'hsl(145,60%,35%)' :
-                                  'hsl(var(--status-pass))'
+                                    enduranceBadge.color === 'yellow' ? 'hsl(var(--status-restricted))' :
+                                      enduranceBadge.color === 'emerald' ? 'hsl(145,60%,35%)' :
+                                        'hsl(var(--status-pass))'
                                 }}>
                                   {enduranceBadge.label}
                                 </span>

@@ -46,13 +46,54 @@ const COLORS = {
   white: '#ffffff',
 };
 
+// ─── Pixel widths (body=754px, padding=20px each side → content=714px) ────────
+// Coach report: 5 cols → 12%=86, 18%=128, 18%=128, 30%=214, 22%=157  (total=713 ≈ ok)
+// Client report: 2 cols → 35%=250, 65%=464
+// AMRAP: 5 cols → 15%=107, 25%=179, 25%=179, 15%=107, 20%=143  (total=715 ≈ ok)
+const CW_COACH = ['85px', '128px', '128px', '213px', '156px'];
+const CW_CLIENT = ['249px', '463px'];
+const CW_AMRAP = ['107px', '178px', '178px', '107px', '142px'];
+
 function badge(label: string, color: string) {
-  // div is more robust than span in html2canvas for geometry. 
-  // asymmetric padding (2px top / 6px bottom) to push the text UP
-  return `<div style="display:inline-block;background:${color};color:#ffffff;font-family:Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;padding:2px 8px 6px 8px;border-radius:4px;line-height:1;vertical-align:middle;margin:1px 0;text-align:center;">${label}</div>`;
+  // SVG entirely bypasses html2canvas iOS Text baseline bugs
+  const width = Math.max(50, label.length * 8.5 + 20); // Generous width padding so text never touches edges
+  return `<div style="display:inline-block; vertical-align:middle; margin:1px 0;">
+    <svg width="${width}" height="18" viewBox="0 0 ${width} 18" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${width}" height="18" rx="4" fill="${color}" />
+      <text x="50%" y="12.5" font-family="Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">${label}</text>
+    </svg>
+  </div>`;
 }
 
-function outputCell(param: any, dropdownResults: Record<string, string>, numericResults: Record<string, number>, gender: string, age: number | null): string {
+// ─── Div-based cell helpers (html2pdf.js ignores CSS tables) ──────────────────
+const CELL_BASE = `display:inline-block;vertical-align:top;box-sizing:border-box;padding:6px;font-family:Arial,sans-serif;font-size:10px;line-height:1.4;word-break:break-word;overflow:hidden;`;
+
+const DivTH = (label: string, width: string) =>
+  `<div style="${CELL_BASE}width:${width};font-size:9px;font-weight:700;text-transform:uppercase;color:${COLORS.muted};letter-spacing:0.05em;">${label}</div>`;
+
+const DivTD = (content: string, width: string, bold = false, color = COLORS.text) =>
+  `<div style="${CELL_BASE}width:${width};color:${color};font-weight:${bold ? '600' : '400'};">${content}</div>`;
+
+// A header row
+function headerRow(contentHtml: string) {
+  return `<div class="pdf-row" style="display:block;width:100%;border-bottom:2px solid ${COLORS.border};margin-bottom:8px;">${contentHtml}</div>`;
+}
+
+// A data row
+function dataRow(contentHtml: string) {
+  return `<div class="pdf-row" style="display:block;width:100%;">
+    <div style="border-bottom:1px solid ${COLORS.border};font-size:0;">${contentHtml}</div>
+  </div>`;
+}
+
+// ─── Output / finding helpers ─────────────────────────────────────────────────
+function outputCell(
+  param: any,
+  dropdownResults: Record<string, string>,
+  numericResults: Record<string, number>,
+  gender: string,
+  age: number | null
+): string {
   const val = param.type === 'dropdown' ? dropdownResults[param.id] : undefined;
   const numVal = param.type === 'number' ? numericResults[param.id] : undefined;
   const option = val ? getParameterOption(param, val) : undefined;
@@ -86,7 +127,11 @@ function outputCell(param: any, dropdownResults: Record<string, string>, numeric
   return '<span style="color:#94a3b8">—</span>';
 }
 
-function findingCell(param: any, dropdownResults: Record<string, string>, numericResults: Record<string, number>): string {
+function findingCell(
+  param: any,
+  dropdownResults: Record<string, string>,
+  numericResults: Record<string, number>
+): string {
   const val = param.type === 'dropdown' ? dropdownResults[param.id] : undefined;
   const numVal = param.type === 'number' ? numericResults[param.id] : undefined;
   const selectedLabel = param.options?.find((o: any) => o.value === val)?.label;
@@ -95,14 +140,13 @@ function findingCell(param: any, dropdownResults: Record<string, string>, numeri
   return '—';
 }
 
-const TD = (content: string, width: string, bold = false, color = COLORS.text) => {
-  const weight = bold ? 'font-weight:600;' : '';
-  return `<td style="padding:6px;font-family:Arial,sans-serif;font-size:10px;line-height:normal;color:${color};vertical-align:middle;${weight}width:${width};word-break:break-word;white-space:normal;border-bottom:1px solid ${COLORS.border};">${content}</td>`;
-};
-
-const TH = (label: string, width: string) =>
-  `<th style="padding:6px 6px 7px 6px;font-family:Arial,sans-serif;font-size:9px;line-height:12px;font-weight:700;text-transform:uppercase;color:${COLORS.muted};letter-spacing:0.05em;border-bottom:2px solid ${COLORS.border};width:${width};text-align:left;">${label}</th>`;
-function isIssue(param: any, dropdownResults: Record<string, string>, numericResults: Record<string, number>, gender: string, age: number | null): boolean {
+function isIssue(
+  param: any,
+  dropdownResults: Record<string, string>,
+  numericResults: Record<string, number>,
+  gender: string,
+  age: number | null
+): boolean {
   if (param.type === 'dropdown') {
     const val = dropdownResults[param.id];
     if (val) {
@@ -130,10 +174,10 @@ export function buildCoachReportHtml(ctx: ReportCtx, opts: { isClientReport?: bo
   const gender = clientInfo?.gender?.toLowerCase() || '';
   const age = calculateAge(clientInfo?.dob);
   const selectedProtocol = amrapProtocols.find(p => p.id === amrapProtocol) || amrapProtocols[0];
-
   const isVisibleFn = (t: any) => isVisible(t, gender, age);
 
   let sections = '';
+
   for (const section of allSections) {
     const status = getSectionStatus(section, dropdownResults, numericResults, gender, age);
     const statusLabel = status === 'pass' ? 'PASS' : status === 'limitation' ? 'LIMITED' : 'RED FLAG';
@@ -141,17 +185,16 @@ export function buildCoachReportHtml(ctx: ReportCtx, opts: { isClientReport?: bo
 
     let rows = '';
 
-    // Subsections
+    // ── Subsections ───────────────────────────────────────────────────────────
     if (section.subsections) {
       for (const sub of section.subsections.filter(isVisibleFn)) {
         let printedSubName = false;
         let clientOutputHtml = '';
-        for (const test of sub.tests.filter(isVisibleFn)) {
-          const visibleParams = test.parameters.filter(p => {
-            if (!isClientReport) return true;
-            return isIssue(p, dropdownResults, numericResults, gender, age);
-          });
 
+        for (const test of sub.tests.filter(isVisibleFn)) {
+          const visibleParams = test.parameters.filter(p =>
+            !isClientReport ? true : isIssue(p, dropdownResults, numericResults, gender, age)
+          );
           if (visibleParams.length === 0) continue;
 
           for (let i = 0; i < visibleParams.length; i++) {
@@ -159,35 +202,36 @@ export function buildCoachReportHtml(ctx: ReportCtx, opts: { isClientReport?: bo
             if (isClientReport) {
               clientOutputHtml += `<span style="display:inline-block;margin-right:6px;margin-bottom:4px;">${outputCell(param, dropdownResults, numericResults, gender, age)}</span>`;
             } else {
-              rows += `<tr>
-                ${TD(!printedSubName ? sub.name : '', '12%', false, COLORS.muted)}
-                ${TD(i === 0 ? test.name : '', '18%', true)}
-                ${TD(param.name, '18%')}
-                ${TD(findingCell(param, dropdownResults, numericResults), '30%')}
-                ${TD(outputCell(param, dropdownResults, numericResults, gender, age), '22%')}
-              </tr>`;
+              rows += dataRow(
+                DivTD(!printedSubName ? sub.name : '', CW_COACH[0], false, COLORS.muted) +
+                DivTD(i === 0 ? test.name : '', CW_COACH[1], true) +
+                DivTD(param.name, CW_COACH[2]) +
+                DivTD(findingCell(param, dropdownResults, numericResults), CW_COACH[3]) +
+                DivTD(outputCell(param, dropdownResults, numericResults, gender, age), CW_COACH[4])
+              );
               printedSubName = true;
             }
           }
         }
+
         if (isClientReport && clientOutputHtml) {
-          const compHtml = `<div style="font-weight:700;font-size:12px;">${sub.name}</div>`;
-          const detailsHtml = `<div style="display:flex;flex-wrap:wrap;align-items:center;padding:4px 0;">${clientOutputHtml}</div>`;
-          rows += `<tr>${TD(compHtml, '35%', true)}${TD(detailsHtml, '65%')}</tr>`;
+          rows += dataRow(
+            DivTD(`<div style="font-weight:700;font-size:12px;">${sub.name}</div>`, CW_CLIENT[0], true) +
+            DivTD(`<div style="display:flex;flex-wrap:wrap;gap:4px;padding:2px 0;">${clientOutputHtml}</div>`, CW_CLIENT[1])
+          );
         }
       }
     }
 
-    // Top-level tests
+    // ── Top-level tests ───────────────────────────────────────────────────────
     if (section.tests) {
       let printedSecName = false;
       let clientOutputHtml = '';
-      for (const test of section.tests.filter(isVisibleFn)) {
-        const visibleParams = test.parameters.filter(p => {
-          if (!isClientReport) return true;
-          return isIssue(p, dropdownResults, numericResults, gender, age);
-        });
 
+      for (const test of section.tests.filter(isVisibleFn)) {
+        const visibleParams = test.parameters.filter(p =>
+          !isClientReport ? true : isIssue(p, dropdownResults, numericResults, gender, age)
+        );
         if (visibleParams.length === 0) continue;
 
         for (let i = 0; i < visibleParams.length; i++) {
@@ -195,121 +239,180 @@ export function buildCoachReportHtml(ctx: ReportCtx, opts: { isClientReport?: bo
           if (isClientReport) {
             clientOutputHtml += `<span style="display:inline-block;margin-right:6px;margin-bottom:4px;">${outputCell(param, dropdownResults, numericResults, gender, age)}</span>`;
           } else {
-            rows += `<tr>
-              ${TD(!printedSecName ? (section.component || section.name) : '', '12%', false, COLORS.muted)}
-              ${TD(i === 0 ? test.name : '', '18%', true)}
-              ${TD(param.name, '18%')}
-              ${TD(findingCell(param, dropdownResults, numericResults), '30%')}
-              ${TD(outputCell(param, dropdownResults, numericResults, gender, age), '22%')}
-            </tr>`;
+            rows += dataRow(
+              DivTD(!printedSecName ? (section.component || section.name) : '', CW_COACH[0], false, COLORS.muted) +
+              DivTD(i === 0 ? test.name : '', CW_COACH[1], true) +
+              DivTD(param.name, CW_COACH[2]) +
+              DivTD(findingCell(param, dropdownResults, numericResults), CW_COACH[3]) +
+              DivTD(outputCell(param, dropdownResults, numericResults, gender, age), CW_COACH[4])
+            );
             printedSecName = true;
           }
         }
       }
+
       if (isClientReport && clientOutputHtml) {
         const labelName = section.component || section.name;
-        const compHtml = `<div style="font-weight:700;font-size:12px;">${labelName}</div>`;
-        const detailsHtml = `<div style="display:flex;flex-wrap:wrap;align-items:center;padding:4px 0;">${clientOutputHtml}</div>`;
-        rows += `<tr>${TD(compHtml, '35%', true)}${TD(detailsHtml, '65%')}</tr>`;
+        rows += dataRow(
+          DivTD(`<div style="font-weight:700;font-size:12px;">${labelName}</div>`, CW_CLIENT[0], true) +
+          DivTD(`<div style="display:flex;flex-wrap:wrap;gap:4px;padding:2px 0;">${clientOutputHtml}</div>`, CW_CLIENT[1])
+        );
       }
     }
 
-    // Coach notes per test
+    // ── Coach notes per test ──────────────────────────────────────────────────
     const allTests = [
       ...(section.subsections?.flatMap(s => s.tests.filter(isVisibleFn)) || []),
-      ...(section.tests?.filter(isVisibleFn) || [])
+      ...(section.tests?.filter(isVisibleFn) || []),
     ];
     const notedTests = allTests.filter(t => testNotes[t.id]);
     let notesHtml = '';
     if (notedTests.length > 0 && !isClientReport) {
-      notesHtml = `<div style="margin-top:8px;padding:8px;background:${COLORS.bg};border-radius:6px;">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:${COLORS.muted};margin-bottom:4px;">Coach Notes</div>
-        ${notedTests.map(t => `<div style="font-size:10px;color:${COLORS.text};margin-bottom:3px;"><strong>${t.name}:</strong> <em style="color:${COLORS.muted}">${testNotes[t.id]}</em></div>`).join('')}
-      </div>`;
+      notesHtml = `
+        <div class="pdf-row" style="margin-top:8px;padding:8px;background:${COLORS.bg};border-radius:6px;">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:${COLORS.muted};margin-bottom:4px;">Coach Notes</div>
+          ${notedTests.map(t => `
+            <div style="font-size:10px;color:${COLORS.text};margin-bottom:3px;">
+              <strong>${t.name}:</strong> <em style="color:${COLORS.muted}">${testNotes[t.id]}</em>
+            </div>`).join('')}
+        </div>`;
     }
 
     if (!rows) continue;
 
+    // ── Build header for this section ─────────────────────────────────────────
+    const sectionHeader = isClientReport
+      ? headerRow(DivTH('Component', CW_CLIENT[0]) + DivTH('Output', CW_CLIENT[1]))
+      : headerRow(
+        DivTH('Component', CW_COACH[0]) +
+        DivTH('Test', CW_COACH[1]) +
+        DivTH('Parameter', CW_COACH[2]) +
+        DivTH('Benchmark / Finding', CW_COACH[3]) +
+        DivTH('Output', CW_COACH[4])
+      );
+
     sections += `
     <div class="pdf-section" style="background:rgba(255,255,255,0.55);border:1px solid ${COLORS.border};border-radius:10px;padding:16px;margin-bottom:16px;page-break-inside:avoid;">
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid ${COLORS.border};padding-bottom:10px;margin-bottom:10px;">
+      <div class="pdf-row" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid ${COLORS.border};padding-bottom:10px;margin-bottom:10px;">
         <div style="font-size:14px;font-weight:700;color:${COLORS.text};">${section.icon || ''} ${section.name}</div>
-        <div style="display:inline-block;background:${statusColor};color:#ffffff;font-family:Helvetica,Arial,sans-serif;font-size:10px;line-height:1;font-weight:700;padding:2px 10px 5px 10px;border-radius:4px;vertical-align:middle;">${statusLabel}</div>
+        ${(() => {
+        const headerBadgeWidth = Math.max(60, statusLabel.length * 8.5 + 24);
+        return `<div style="display:inline-block; vertical-align:middle;">
+            <svg width="${headerBadgeWidth}" height="20" viewBox="0 0 ${headerBadgeWidth} 20" xmlns="http://www.w3.org/2000/svg">
+              <rect width="${headerBadgeWidth}" height="20" rx="4" fill="${statusColor}" />
+              <text x="50%" y="14" font-family="Helvetica, Arial, sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">${statusLabel}</text>
+            </svg>
+          </div>`;
+      })()}
       </div>
-      <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-        ${isClientReport
-        ? `<thead><tr>${TH('Component', '35%')}${TH('Output', '65%')}</tr></thead>`
-        : `<thead><tr>${TH('Component', '12%')}${TH('Test', '18%')}${TH('Parameter', '18%')}${TH('Benchmark / Finding', '30%')}${TH('Output', '22%')}</tr></thead>`
-      }
-        <tbody>${rows}</tbody>
-      </table>
+      <div style="width:100%;">
+        ${sectionHeader}
+        ${rows}
+      </div>
       ${notesHtml}
     </div>`;
   }
 
-  // AMRAP table
+  // ── AMRAP section ─────────────────────────────────────────────────────────
   let amrapRows = '';
   if (!isClientReport) {
     amrapRows = selectedProtocol.exercises.map((ex, idx) => {
       const key = `${amrapProtocol}_${idx}`;
-      return `<tr>
-        ${TD(ex.category, '15%', true)}
-        ${TD(ex.primaryMovement, '25%')}
-        ${TD(ex.regressionOption, '25%', false, COLORS.muted)}
-        ${TD(amrapExerciseReps[key] || ex.defaultRepsTime, '15%')}
-        ${TD(`<em>${amrapExerciseNotes[key] || ex.defaultCoachNotes}</em>`, '20%', false, COLORS.muted)}
-      </tr>`;
+      return dataRow(
+        DivTD(ex.category, CW_AMRAP[0], true) +
+        DivTD(ex.primaryMovement, CW_AMRAP[1]) +
+        DivTD(ex.regressionOption, CW_AMRAP[2], false, COLORS.muted) +
+        DivTD(amrapExerciseReps[key] || ex.defaultRepsTime, CW_AMRAP[3]) +
+        DivTD(`<em>${amrapExerciseNotes[key] || ex.defaultCoachNotes}</em>`, CW_AMRAP[4], false, COLORS.muted)
+      );
     }).join('');
   }
 
-  // Coach notes
+  // ── Coach summary notes ───────────────────────────────────────────────────
   const cnHtml = [
-    coachNotes.movementCorrections && `<div style="margin-bottom:10px;"><div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Movement Corrections</div><p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.movementCorrections}</p></div>`,
-    coachNotes.injuryPrecautions && `<div style="margin-bottom:10px;"><div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Injury Precautions</div><p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.injuryPrecautions}</p></div>`,
-    coachNotes.trainingFocus && `<div><div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Training Focus</div><p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.trainingFocus}</p></div>`,
+    coachNotes.movementCorrections && `
+      <div style="margin-bottom:10px;">
+        <div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Movement Corrections</div>
+        <p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.movementCorrections}</p>
+      </div>`,
+    coachNotes.injuryPrecautions && `
+      <div style="margin-bottom:10px;">
+        <div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Injury Precautions</div>
+        <p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.injuryPrecautions}</p>
+      </div>`,
+    coachNotes.trainingFocus && `
+      <div>
+        <div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Training Focus</div>
+        <p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.trainingFocus}</p>
+      </div>`,
   ].filter(Boolean).join('');
 
   const reportTitle = isClientReport ? 'Client Fitness Report' : 'Coach Detailed Report';
 
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:20px;font-family:Arial,Helvetica,sans-serif;background-color:#ffffff;background-image:url(&quot;${WATERMARK_SVG}&quot;);background-size:1122px 1122px;background-position:center top;background-repeat:repeat-y;color:${COLORS.text};width:754px;box-sizing:border-box;">
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; padding:20px; font-family:Arial,Helvetica,sans-serif; background-color:#ffffff; color:${COLORS.text}; width:754px; }
+  </style>
+</head>
+<body style="background-image:url('${WATERMARK_SVG}');background-size:1122px 1122px;background-position:center top;background-repeat:repeat-y;">
 
+  <!-- Header -->
   <div class="pdf-section" style="display:flex;align-items:center;margin-bottom:24px;border-bottom:2px solid ${COLORS.border};padding-bottom:16px;">
-    <img src="${LOGO_SVG}" style="height:48px;width:auto;margin-right:16px;" alt="HB Logo" />
+    <img src="${LOGO_SVG}" style="height:48px;width:48px;margin-right:16px;" alt="HB Logo" />
     <div>
       <div style="font-size:24px;font-weight:800;color:${COLORS.text};letter-spacing:-0.02em;">HB+ Health Assessment</div>
       <div style="font-size:13px;color:${COLORS.muted};text-transform:uppercase;letter-spacing:0.05em;font-weight:600;margin-top:2px;">${reportTitle}</div>
     </div>
   </div>
 
+  <!-- Client Info -->
   <div class="pdf-section" style="background:rgba(255,255,255,0.55);border:1px solid ${COLORS.border};border-radius:10px;padding:16px;margin-bottom:16px;">
     <div style="font-size:15px;font-weight:700;color:${COLORS.text};border-bottom:1px solid ${COLORS.border};padding-bottom:8px;margin-bottom:12px;">Client Information</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">
-      <div><span style="font-weight:700;color:${COLORS.muted};">Client:</span> ${clientInfo.clientName || '—'}</div>
-      <div><span style="font-weight:700;color:${COLORS.muted};">Coach:</span> ${clientInfo.coachName || '—'}</div>
-      <div><span style="font-weight:700;color:${COLORS.muted};">Date:</span> ${clientInfo.date || '—'}</div>
-      <div><span style="font-weight:700;color:${COLORS.muted};">DOB:</span> ${clientInfo.dob || '—'}</div>
-      <div><span style="font-weight:700;color:${COLORS.muted};">Gender:</span> ${clientInfo.gender || '—'}</div>
+    <div style="font-size:0;">
+      <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">Client:</span> ${clientInfo.clientName || '—'}</div>
+      <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">Coach:</span> ${clientInfo.coachName || '—'}</div>
+      <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">Date:</span> ${clientInfo.date || '—'}</div>
+      <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">DOB:</span> ${clientInfo.dob || '—'}</div>
+      <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">Gender:</span> ${clientInfo.gender || '—'}</div>
     </div>
     ${clientInfo.injuryNotes ? `<div style="margin-top:12px;padding:10px;background:#fee2e2;border-radius:6px;font-size:10px;"><span style="font-weight:700;color:#dc2626;">Injury Notes:</span> ${clientInfo.injuryNotes}</div>` : ''}
   </div>
 
+  <!-- Assessment Sections -->
   ${sections}
 
+  <!-- AMRAP Protocol -->
   ${!isClientReport ? `
   <div class="pdf-section" style="background:rgba(255,255,255,0.55);border:1px solid ${COLORS.border};border-radius:10px;padding:16px;margin-bottom:16px;page-break-inside:avoid;">
-    <div style="font-size:14px;font-weight:700;color:${COLORS.text};border-bottom:1px solid ${COLORS.border};padding-bottom:8px;margin-bottom:10px;">⏱️ AMRAP Protocol: ${selectedProtocol.name}</div>
-    <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-      <thead><tr>${TH('Category', '15%')}${TH('Primary Movement', '25%')}${TH('Regression', '25%')}${TH('Reps / Time', '15%')}${TH('Coach Notes', '20%')}</tr></thead>
-      <tbody>${amrapRows}</tbody>
-    </table>
+    <div class="pdf-row" style="font-size:14px;font-weight:700;color:${COLORS.text};border-bottom:1px solid ${COLORS.border};padding-bottom:8px;margin-bottom:10px;">⏱️ AMRAP Protocol: ${selectedProtocol.name}</div>
+    <div style="width:100%;">
+      ${headerRow(
+    DivTH('Category', CW_AMRAP[0]) +
+    DivTH('Primary Movement', CW_AMRAP[1]) +
+    DivTH('Regression', CW_AMRAP[2]) +
+    DivTH('Reps / Time', CW_AMRAP[3]) +
+    DivTH('Coach Notes', CW_AMRAP[4])
+  )}
+      ${amrapRows}
+    </div>
   </div>
   ` : ''}
 
-  ${cnHtml ? `<div class="pdf-section" style="background:rgba(255,255,255,0.55);border:1px solid ${COLORS.border};border-radius:10px;padding:16px;margin-bottom:16px;">${cnHtml}</div>` : ''}
+  <!-- Coach Summary Notes -->
+  ${cnHtml ? `
+  <div class="pdf-section" style="background:rgba(255,255,255,0.55);border:1px solid ${COLORS.border};border-radius:10px;padding:16px;margin-bottom:16px;page-break-inside:avoid;">
+    ${cnHtml}
+  </div>` : ''}
 
+  <!-- Footer -->
   <div style="text-align:center;font-size:9px;color:${COLORS.muted};margin-top:20px;">
     HB+ Health Assessment • Generated ${new Date().toLocaleDateString()}
   </div>
-</body></html>`;
+
+</body>
+</html>`;
 }
