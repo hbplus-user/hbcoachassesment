@@ -2,9 +2,9 @@ import { useAssessment } from '@/context/AssessmentContext';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  getBreathHoldOutput, 
-  getCountingBreathOutput, 
+import {
+  getBreathHoldOutput,
+  getCountingBreathOutput,
   getStsOutput,
   breathHoldMale,
   breathHoldFemale,
@@ -50,7 +50,7 @@ export function EnduranceStep() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">❤️ Endurance Tests</h2>
+        <h2 className="text-2xl font-bold text-foreground">❤️ Endurance</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Enter findings for each test. Output is calculated based on {genderLabel} benchmarks
           {age !== null && <span> (Age: {age})</span>}.
@@ -89,8 +89,8 @@ export function EnduranceStep() {
                 const rangeText = r.min !== undefined && r.max !== undefined
                   ? `${r.min}–${r.max} sec`
                   : r.max !== undefined
-                  ? `< ${r.max} sec`
-                  : `${r.min}+ sec`;
+                    ? `< ${r.max} sec`
+                    : `${r.min}+ sec`;
                 const isHighlighted = bhOutput?.label === r.label;
                 return (
                   <tr key={i} className={`border-b border-border/30 ${isHighlighted ? 'bg-primary/10 font-semibold' : ''}`}>
@@ -145,8 +145,8 @@ export function EnduranceStep() {
                 const rangeText = r.min !== undefined && r.max !== undefined
                   ? `${r.min}–${r.max}`
                   : r.max !== undefined
-                  ? `< ${r.max}`
-                  : `> ${r.min}`;
+                    ? `< ${r.max}`
+                    : `> ${r.min}`;
                 const isHighlighted = cbOutput?.label === r.label;
                 return (
                   <tr key={i} className={`border-b border-border/30 ${isHighlighted ? 'bg-primary/10 font-semibold' : ''}`}>

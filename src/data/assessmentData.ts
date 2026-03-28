@@ -52,7 +52,7 @@ const opt = (label: string, value: string, severity: SeverityLevel, outputFlag: 
 // ============ MOBILITY ASSESSMENT ============
 export const mobilitySection: Section = {
   id: 'mobility',
-  name: 'Mobility Assessment',
+  name: 'Mobility',
   component: 'Mobility',
   icon: '🦴',
   subsections: [
@@ -531,7 +531,7 @@ export const mobilitySection: Section = {
 
 export const movementSection: Section = {
   id: 'movement',
-  name: 'Movement Assessment',
+  name: 'Movement',
   component: 'Movement',
   icon: '🏃',
   subsections: [
@@ -596,7 +596,7 @@ export const movementSection: Section = {
 
 export const strengthSection: Section = {
   id: 'strength',
-  name: 'Strength Tests',
+  name: 'Strength',
   component: 'Strength',
   icon: '💪',
   subsections: [
@@ -783,7 +783,7 @@ export const strengthSection: Section = {
 
 export const enduranceSection: Section = {
   id: 'endurance',
-  name: 'Endurance Tests',
+  name: 'Endurance',
   component: 'Endurance',
   icon: '❤️',
   subsections: [
@@ -845,7 +845,7 @@ export const enduranceSection: Section = {
 
 export const balanceSection: Section = {
   id: 'balance',
-  name: 'Balance – Single Leg Stance Test',
+  name: 'Balance',
   component: 'Balance',
   icon: '⚖️',
   tests: [
@@ -1008,7 +1008,7 @@ export const amrapScoringGuide: AmrapScoringParam[] = [
 
 export const amrapSection: Section = {
   id: 'amrap',
-  name: 'AMRAP Conditioning Test',
+  name: 'AMRAP Conditioning',
   component: 'Conditioning',
   icon: '⏱️',
   tests: [

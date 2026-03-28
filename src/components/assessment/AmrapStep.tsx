@@ -29,7 +29,7 @@ export function AmrapStep() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">⏱️ AMRAP Conditioning Test</h2>
+        <h2 className="text-2xl font-bold text-foreground">⏱️ AMRAP Conditioning</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Select the protocol and record exercise performance.
         </p>
@@ -43,11 +43,10 @@ export function AmrapStep() {
             <button
               key={protocol.id}
               onClick={() => setAmrapProtocol(protocol.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all ${
-                amrapProtocol === protocol.id
+              className={`px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-all ${amrapProtocol === protocol.id
                   ? `${protocolColors[protocol.id]} border-opacity-100 shadow-md`
                   : 'border-border bg-muted/30 text-muted-foreground hover:bg-muted/60'
-              }`}
+                }`}
             >
               {protocol.name}
             </button>
@@ -76,9 +75,8 @@ export function AmrapStep() {
           return (
             <div
               key={key}
-              className={`grid grid-cols-1 md:grid-cols-12 gap-2 px-4 py-3 items-center ${
-                idx % 2 === 0 ? 'bg-background/60' : 'bg-muted/20'
-              } border-b border-border/30`}
+              className={`grid grid-cols-1 md:grid-cols-12 gap-2 px-4 py-3 items-center ${idx % 2 === 0 ? 'bg-background/60' : 'bg-muted/20'
+                } border-b border-border/30`}
             >
               <div className="md:col-span-2">
                 <span className="md:hidden text-xs font-bold text-muted-foreground uppercase">Category: </span>
