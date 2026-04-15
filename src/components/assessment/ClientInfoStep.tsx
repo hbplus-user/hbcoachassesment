@@ -90,6 +90,10 @@ export function ClientInfoStep() {
             </SelectContent>
           </Select>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="uhid">UHID</Label>
+          <Input id="uhid" value={clientInfo.uhid} onChange={e => update('uhid', e.target.value)} placeholder="Enter UHID" />
+        </div>
       </div>
 
       <div className="space-y-2">

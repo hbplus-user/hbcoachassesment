@@ -11,7 +11,6 @@ export default function ClientReport() {
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">Health Assessment Report</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/report/coach')}>Coach Report</Button>
             <Button variant="outline" onClick={() => navigate('/')}>← Back</Button>
             <Button onClick={() => window.print()}>🖨️ Print / PDF</Button>
           </div>

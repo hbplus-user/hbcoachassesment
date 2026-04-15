@@ -278,7 +278,6 @@ export default function CoachReport() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-foreground">Coach Detailed Report</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/report/client')}>View Client Report</Button>
             <Button variant="outline" onClick={() => navigate('/')}>← Back to Form</Button>
             <Button onClick={handleGenerateAndSavePdf} disabled={isGenerating}>
               {isGenerating ? 'Processing...' : '🖨️ Download & Save PDF'}
@@ -297,6 +296,7 @@ export default function CoachReport() {
             <div><span className="font-semibold text-muted-foreground">Date:</span> <span className="text-foreground">{clientInfo.date || '—'}</span></div>
             <div><span className="font-semibold text-muted-foreground">DOB:</span> <span className="text-foreground">{clientInfo.dob || '—'}</span></div>
             <div><span className="font-semibold text-muted-foreground">Gender:</span> <span className="text-foreground capitalize">{clientInfo.gender || '—'}</span></div>
+            <div><span className="font-semibold text-muted-foreground">UHID:</span> <span className="text-foreground">{clientInfo.uhid || '—'}</span></div>
           </div>
           {clientInfo.injuryNotes && (
             <div className="mt-4 p-3 bg-destructive/10 rounded-lg text-sm">

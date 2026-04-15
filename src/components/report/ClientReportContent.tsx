@@ -66,6 +66,7 @@ export const ClientReportContent = forwardRef<HTMLDivElement, {}>((props, ref) =
           <div><span className="font-semibold text-muted-foreground">Date:</span> {clientInfo.date || '—'}</div>
           <div><span className="font-semibold text-muted-foreground">Coach:</span> {clientInfo.coachName || '—'}</div>
           <div><span className="font-semibold text-muted-foreground">DOB:</span> {clientInfo.dob || '—'}</div>
+          <div><span className="font-semibold text-muted-foreground">UHID:</span> {clientInfo.uhid || '—'}</div>
         </div>
       </Card>
 

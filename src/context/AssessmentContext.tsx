@@ -6,6 +6,7 @@ export interface ClientInfo {
   dob: string;
   coachName: string;
   gender: string;
+  uhid: string;
   injuryNotes: string;
 }
 
@@ -44,12 +45,32 @@ const AssessmentContext = createContext<AssessmentContextType | undefined>(undef
 
 export function AssessmentProvider({ children }: { children: ReactNode }) {
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
-    clientName: '', date: new Date().toISOString().split('T')[0], dob: '', coachName: '', gender: '', injuryNotes: '',
+    clientName: 'Rahul Sharma', 
+    date: new Date().toISOString().split('T')[0], 
+    dob: '1995-06-15', 
+    coachName: 'John Doe', 
+    gender: 'male', 
+    uhid: 'HB-98765-P', 
+    injuryNotes: 'Minor shoulder stiffness from overhead pressing yesterday.',
   });
-  const [dropdownResults, setDropdownResults] = useState<Record<string, string>>({});
-  const [numericResults, setNumericResults] = useState<Record<string, number>>({});
-  const [testNotes, setTestNotes] = useState<Record<string, string>>({});
-  const [coachNotes, setCoachNotes] = useState<CoachNotes>({ movementCorrections: '', injuryPrecautions: '', trainingFocus: '' });
+  const [dropdownResults, setDropdownResults] = useState<Record<string, string>>({
+    'cervical_flexion': 'pass',
+    'shoulder_flexion': 'limitation',
+    'squat_pattern': 'pass',
+  });
+  const [numericResults, setNumericResults] = useState<Record<string, number>>({
+    'breath_hold_time': 45,
+    'counting_breath_rate': 12,
+    'sit_to_stand_reps': 30,
+  });
+  const [testNotes, setTestNotes] = useState<Record<string, string>>({
+    'shoulder_flexion': 'Slight tightness in right shoulder.',
+  });
+  const [coachNotes, setCoachNotes] = useState<CoachNotes>({ 
+    movementCorrections: 'Focus on thoracic mobility and core stability during squatting.', 
+    injuryPrecautions: 'Avoid ultra-heavy overhead pressing for 1 week.', 
+    trainingFocus: 'Increase metabolic conditioning and lateral stability.' 
+  });
   const [currentStep, setCurrentStep] = useState(0);
   const [amrapProtocol, setAmrapProtocol] = useState('standard');
   const [amrapExerciseNotes, setAmrapExerciseNotes] = useState<Record<string, string>>({});

@@ -19,6 +19,7 @@ type ReportCtx = {
     dob: string;
     coachName: string;
     gender: string;
+    uhid: string;
     injuryNotes: string;
   };
   dropdownResults: Record<string, string>;
@@ -378,6 +379,7 @@ export function buildCoachReportHtml(ctx: ReportCtx, opts: { isClientReport?: bo
       <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">Date:</span> ${clientInfo.date || '—'}</div>
       <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">DOB:</span> ${clientInfo.dob || '—'}</div>
       <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">Gender:</span> ${clientInfo.gender || '—'}</div>
+      <div style="display:inline-block;width:50%;font-size:11px;padding:2px 0;"><span style="font-weight:700;color:${COLORS.muted};">UHID:</span> ${clientInfo.uhid || '—'}</div>
     </div>
     ${clientInfo.injuryNotes ? `<div style="margin-top:12px;padding:10px;background:#fee2e2;border-radius:6px;font-size:10px;"><span style="font-weight:700;color:#dc2626;">Injury Notes:</span> ${clientInfo.injuryNotes}</div>` : ''}
   </div>
