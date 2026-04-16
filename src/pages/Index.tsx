@@ -57,6 +57,7 @@ const Index = () => {
         .insert([{
           client_name: clientInfo.clientName,
           coach_name: clientInfo.coachName,
+          uhid: clientInfo.uhid,
           date: clientInfo.date,
           data: contextData // Save entire assessment context as JSONB
         }])
