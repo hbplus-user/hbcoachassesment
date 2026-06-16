@@ -23,6 +23,8 @@ export interface CoachNotes {
   hbYogaSessions: string;
   hbPhysioEnabled: string;
   hbPhysioSessions: string;
+  hbMentalEnabled: string;
+  hbMentalSessions: string;
   hbNutritionApproach: string;
 }
 
@@ -65,6 +67,7 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
     hbStrengthEnabled: '', hbStrengthSessions: '',
     hbYogaEnabled: '', hbYogaSessions: '',
     hbPhysioEnabled: '', hbPhysioSessions: '',
+    hbMentalEnabled: '', hbMentalSessions: '',
     hbNutritionApproach: '',
   });
   const [currentStep, setCurrentStep] = useState(0);

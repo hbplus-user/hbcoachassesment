@@ -31,6 +31,15 @@ type ReportCtx = {
     currentPlanDays: string;
     currentPlanSuggest: string;
     trainingFocus: string;
+    hbStrengthEnabled?: string;
+    hbStrengthSessions?: string;
+    hbYogaEnabled?: string;
+    hbYogaSessions?: string;
+    hbPhysioEnabled?: string;
+    hbPhysioSessions?: string;
+    hbMentalEnabled?: string;
+    hbMentalSessions?: string;
+    hbNutritionApproach?: string;
   };
   amrapProtocol: string;
   amrapExerciseReps: Record<string, string>;
@@ -354,6 +363,100 @@ export function buildCoachReportHtml(ctx: ReportCtx, opts: { isClientReport?: bo
       </div>`,
   ].filter(Boolean).join('');
 
+  const showHbStrength = coachNotes.hbStrengthEnabled === 'true' || !!coachNotes.hbStrengthSessions;
+  const showHbYoga     = coachNotes.hbYogaEnabled === 'true'     || !!coachNotes.hbYogaSessions;
+  const showHbPhysio   = coachNotes.hbPhysioEnabled === 'true'   || !!coachNotes.hbPhysioSessions;
+  const showHbMental   = coachNotes.hbMentalEnabled === 'true'   || !!coachNotes.hbMentalSessions;
+  const hasHbServices  = showHbStrength || showHbYoga || showHbPhysio || showHbMental || !!coachNotes.hbNutritionApproach;
+
+  const hbBadge = (enabled: string | undefined) => {
+    const isMandatory = enabled === 'true';
+    const label = isMandatory ? 'Mandatory' : 'Optional';
+    const bgColor = isMandatory ? '#6b2c2c' : '#e5e7eb';
+    const textColor = isMandatory ? '#ffffff' : '#6b7280';
+    const width = 64;
+    const height = 18;
+
+    return `<div style="display:inline-block;vertical-align:middle;margin:1px 0;">
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="${width}" height="${height}" rx="4" fill="${bgColor}" />
+        <text x="50%" y="12.5" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" fill="${textColor}" text-anchor="middle">${label}</text>
+      </svg>
+    </div>`;
+  };
+
+  let hbServicesHtml = '';
+  if (hasHbServices) {
+    let rows = '';
+    if (showHbStrength) {
+      rows += `
+        <div style="padding:6px 16px;border-bottom:1px solid ${COLORS.border};font-size:11px;line-height:20px;height:36px;box-sizing:border-box;">
+          <div style="display:inline-block;width:280px;font-weight:700;vertical-align:middle;">Strength & Conditioning</div>
+          <div style="display:inline-block;width:200px;color:${COLORS.muted};vertical-align:middle;">
+            ${coachNotes.hbStrengthSessions ? `Sessions/week: <strong style="color:${COLORS.text};">${coachNotes.hbStrengthSessions}</strong>` : ''}
+          </div>
+          <div style="display:inline-block;width:200px;text-align:right;vertical-align:middle;">
+            ${hbBadge(coachNotes.hbStrengthEnabled)}
+          </div>
+        </div>`;
+    }
+    if (showHbYoga) {
+      rows += `
+        <div style="padding:6px 16px;border-bottom:1px solid ${COLORS.border};font-size:11px;line-height:20px;height:36px;box-sizing:border-box;">
+          <div style="display:inline-block;width:280px;font-weight:700;vertical-align:middle;">Yoga & Mobility</div>
+          <div style="display:inline-block;width:200px;color:${COLORS.muted};vertical-align:middle;">
+            ${coachNotes.hbYogaSessions ? `Sessions/week: <strong style="color:${COLORS.text};">${coachNotes.hbYogaSessions}</strong>` : ''}
+          </div>
+          <div style="display:inline-block;width:200px;text-align:right;vertical-align:middle;">
+            ${hbBadge(coachNotes.hbYogaEnabled)}
+          </div>
+        </div>`;
+    }
+    if (showHbPhysio) {
+      rows += `
+        <div style="padding:6px 16px;border-bottom:1px solid ${COLORS.border};font-size:11px;line-height:20px;height:36px;box-sizing:border-box;">
+          <div style="display:inline-block;width:280px;font-weight:700;vertical-align:middle;">Physiotherapy / Movement Rehab</div>
+          <div style="display:inline-block;width:200px;color:${COLORS.muted};vertical-align:middle;">
+            ${coachNotes.hbPhysioSessions ? `Sessions/week: <strong style="color:${COLORS.text};">${coachNotes.hbPhysioSessions}</strong>` : ''}
+          </div>
+          <div style="display:inline-block;width:200px;text-align:right;vertical-align:middle;">
+            ${hbBadge(coachNotes.hbPhysioEnabled)}
+          </div>
+        </div>`;
+    }
+    if (showHbMental) {
+      rows += `
+        <div style="padding:6px 16px;border-bottom:1px solid ${COLORS.border};font-size:11px;line-height:20px;height:36px;box-sizing:border-box;">
+          <div style="display:inline-block;width:280px;font-weight:700;vertical-align:middle;">Mental Wellness / Coaching</div>
+          <div style="display:inline-block;width:200px;color:${COLORS.muted};vertical-align:middle;">
+            ${coachNotes.hbMentalSessions ? `Sessions/week: <strong style="color:${COLORS.text};">${coachNotes.hbMentalSessions}</strong>` : ''}
+          </div>
+          <div style="display:inline-block;width:200px;text-align:right;vertical-align:middle;">
+            ${hbBadge(coachNotes.hbMentalEnabled)}
+          </div>
+        </div>`;
+    }
+    if (coachNotes.hbNutritionApproach) {
+      rows += `
+        <div style="padding:8px 16px;font-size:11px;color:${COLORS.muted};">
+          ${coachNotes.hbNutritionApproach}
+        </div>`;
+    }
+
+    hbServicesHtml = `
+      <div class="pdf-section" style="background:rgba(255,255,255,0.55);border:1px solid ${COLORS.border};border-radius:10px;overflow:hidden;margin-bottom:16px;page-break-inside:avoid;">
+        <div style="padding:10px 16px;background:#6b2c2c;">
+          <p style="margin:0;font-size:10px;font-weight:700;letter-spacing:0.05em;color:#f5e6d3;text-transform:uppercase;">
+            HB+ Services Prescribed
+          </p>
+        </div>
+        <div style="background:#ffffff;">
+          ${rows}
+        </div>
+      </div>
+    `;
+  }
+
   const reportTitle = isClientReport ? 'Client Fitness Report' : 'Coach Detailed Report';
 
   return `<!DOCTYPE html>
@@ -409,6 +512,9 @@ export function buildCoachReportHtml(ctx: ReportCtx, opts: { isClientReport?: bo
     </div>
   </div>
   ` : ''}
+
+  <!-- HB+ Services Prescribed -->
+  ${hbServicesHtml}
 
   <!-- Coach Summary Notes -->
   ${cnHtml ? `

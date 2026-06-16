@@ -521,38 +521,54 @@ export default function CoachReport() {
         )}
 
         {/* HB+ Services Prescribed */}
-        {(coachNotes.hbStrengthEnabled || coachNotes.hbYogaEnabled || coachNotes.hbPhysioEnabled || coachNotes.hbMentalEnabled || coachNotes.hbNutritionApproach) && (
-          <Card className="overflow-hidden print-break">
-            <div className="px-6 py-3 bg-[#6b2c2c]">
-              <p className="text-xs font-bold tracking-widest text-[#f5e6d3] uppercase">
-                HB+ Services Prescribed (Tick all that apply and note frequency)
-              </p>
-            </div>
-            <div className="divide-y divide-border text-sm">
-              {coachNotes.hbStrengthEnabled === 'true' && (
-                <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3">
-                  <span className="font-semibold w-48 shrink-0">Strength & Conditioning</span>
-                  {coachNotes.hbStrengthSessions && <span className="text-muted-foreground">Sessions/week: <strong>{coachNotes.hbStrengthSessions}</strong></span>}
+        {(() => {
+          const showStrength = coachNotes.hbStrengthEnabled === 'true' || !!coachNotes.hbStrengthSessions;
+          const showYoga     = coachNotes.hbYogaEnabled === 'true'     || !!coachNotes.hbYogaSessions;
+          const showPhysio   = coachNotes.hbPhysioEnabled === 'true'   || !!coachNotes.hbPhysioSessions;
+          const showMental   = coachNotes.hbMentalEnabled === 'true'   || !!coachNotes.hbMentalSessions;
+          const showNotes    = !!coachNotes.hbNutritionApproach;
+          if (!showStrength && !showYoga && !showPhysio && !showMental && !showNotes) return null;
+          return (
+            <Card className="print-break">
+              <div className="px-6 py-3 bg-[#6b2c2c] rounded-t-lg">
+                <p className="text-xs font-bold tracking-widest text-[#f5e6d3] uppercase">
+                  HB+ Services Prescribed (Tick all that apply and note frequency)
+                </p>
+              </div>
+              {showStrength && (
+                <div style={{position:'relative', padding:'10px 16px 10px 16px', borderBottom:'1px solid #e5e7eb', paddingRight:'130px'}}>
+                  <span style={{fontWeight:600, marginRight:'24px'}}>Strength & Conditioning</span>
+                  {coachNotes.hbStrengthSessions && <span style={{color:'#6b7280'}}>Sessions/week: <strong>{coachNotes.hbStrengthSessions}</strong></span>}
+                  <span style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background: coachNotes.hbStrengthEnabled === 'true' ? '#6b2c2c' : '#e5e7eb', color: coachNotes.hbStrengthEnabled === 'true' ? '#fff' : '#6b7280', whiteSpace:'nowrap'}}>{coachNotes.hbStrengthEnabled === 'true' ? 'Mandatory' : 'Optional'}</span>
                 </div>
               )}
-              {coachNotes.hbYogaEnabled === 'true' && (
-                <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3">
-                  <span className="font-semibold w-48 shrink-0">Yoga & Mobility</span>
-                  {coachNotes.hbYogaSessions && <span className="text-muted-foreground">Sessions/week: <strong>{coachNotes.hbYogaSessions}</strong></span>}
+              {showYoga && (
+                <div style={{position:'relative', padding:'10px 16px 10px 16px', borderBottom:'1px solid #e5e7eb', paddingRight:'130px'}}>
+                  <span style={{fontWeight:600, marginRight:'24px'}}>Yoga & Mobility</span>
+                  {coachNotes.hbYogaSessions && <span style={{color:'#6b7280'}}>Sessions/week: <strong>{coachNotes.hbYogaSessions}</strong></span>}
+                  <span style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background: coachNotes.hbYogaEnabled === 'true' ? '#6b2c2c' : '#e5e7eb', color: coachNotes.hbYogaEnabled === 'true' ? '#fff' : '#6b7280', whiteSpace:'nowrap'}}>{coachNotes.hbYogaEnabled === 'true' ? 'Mandatory' : 'Optional'}</span>
                 </div>
               )}
-              {coachNotes.hbPhysioEnabled === 'true' && (
-                <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3">
-                  <span className="font-semibold w-48 shrink-0">Physiotherapy / Movement Rehab</span>
-                  {coachNotes.hbPhysioSessions && <span className="text-muted-foreground">Sessions/week: <strong>{coachNotes.hbPhysioSessions}</strong></span>}
+              {showPhysio && (
+                <div style={{position:'relative', padding:'10px 16px 10px 16px', borderBottom:'1px solid #e5e7eb', paddingRight:'130px'}}>
+                  <span style={{fontWeight:600, marginRight:'24px'}}>Physiotherapy / Movement Rehab</span>
+                  {coachNotes.hbPhysioSessions && <span style={{color:'#6b7280'}}>Sessions/week: <strong>{coachNotes.hbPhysioSessions}</strong></span>}
+                  <span style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background: coachNotes.hbPhysioEnabled === 'true' ? '#6b2c2c' : '#e5e7eb', color: coachNotes.hbPhysioEnabled === 'true' ? '#fff' : '#6b7280', whiteSpace:'nowrap'}}>{coachNotes.hbPhysioEnabled === 'true' ? 'Mandatory' : 'Optional'}</span>
                 </div>
               )}
-              {coachNotes.hbNutritionApproach && (
-                <div className="px-6 py-3 text-muted-foreground">{coachNotes.hbNutritionApproach}</div>
+              {showMental && (
+                <div style={{position:'relative', padding:'10px 16px 10px 16px', borderBottom:'1px solid #e5e7eb', paddingRight:'130px'}}>
+                  <span style={{fontWeight:600, marginRight:'24px'}}>Mental Wellness / Coaching</span>
+                  {coachNotes.hbMentalSessions && <span style={{color:'#6b7280'}}>Sessions/week: <strong>{coachNotes.hbMentalSessions}</strong></span>}
+                  <span style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background: coachNotes.hbMentalEnabled === 'true' ? '#6b2c2c' : '#e5e7eb', color: coachNotes.hbMentalEnabled === 'true' ? '#fff' : '#6b7280', whiteSpace:'nowrap'}}>{coachNotes.hbMentalEnabled === 'true' ? 'Mandatory' : 'Optional'}</span>
+                </div>
               )}
-            </div>
-          </Card>
-        )}
+              {showNotes && (
+                <div className="px-6 py-3 text-muted-foreground border-t border-border">{coachNotes.hbNutritionApproach}</div>
+              )}
+            </Card>
+          );
+        })()}
       </main>
     </div>
   );

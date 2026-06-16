@@ -138,6 +138,22 @@ export function CoachNotesStep() {
               />
             </div>
 
+            {/* Mental Wellness / Coaching */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+              <Checkbox
+                checked={coachNotes.hbMentalEnabled === 'true'}
+                onCheckedChange={v => update('hbMentalEnabled', v ? 'true' : '')}
+              />
+              <span className="font-semibold text-sm w-48 shrink-0">Mental Wellness / Coaching</span>
+              <span className="text-sm text-muted-foreground shrink-0">Sessions/week:</span>
+              <Input
+                type="number" min={1}
+                value={coachNotes.hbMentalSessions}
+                onChange={e => update('hbMentalSessions', e.target.value)}
+                className="w-20 h-8 text-sm bg-white"
+              />
+            </div>
+
 
             {/* Free text row */}
             <div className="px-4 py-3">
