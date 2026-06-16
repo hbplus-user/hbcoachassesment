@@ -11,9 +11,25 @@ export interface ClientInfo {
 }
 
 export interface CoachNotes {
-  movementCorrections: string;
-  injuryPrecautions: string;
+  roadMap: string;
+  currentPlanType: string;
+  currentPlanDays: string;
+  currentPlanSuggest: string;
   trainingFocus: string;
+  // HB+ Services Prescribed
+  hbStrengthEnabled: string;
+  hbStrengthSessions: string;
+  hbStrengthModifications: string;
+  hbYogaEnabled: string;
+  hbYogaSessions: string;
+  hbYogaFormat: string;
+  hbPhysioEnabled: string;
+  hbPhysioSessions: string;
+  hbPhysioFocusArea: string;
+  hbMentalEnabled: string;
+  hbMentalSessions: string;
+  hbNutritionEnabled: string;
+  hbNutritionApproach: string;
 }
 
 interface AssessmentState {
@@ -50,7 +66,14 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
   const [dropdownResults, setDropdownResults] = useState<Record<string, string>>({});
   const [numericResults, setNumericResults] = useState<Record<string, number>>({});
   const [testNotes, setTestNotes] = useState<Record<string, string>>({});
-  const [coachNotes, setCoachNotes] = useState<CoachNotes>({ movementCorrections: '', injuryPrecautions: '', trainingFocus: '' });
+  const [coachNotes, setCoachNotes] = useState<CoachNotes>({
+    roadMap: '', currentPlanType: '', currentPlanDays: '', currentPlanSuggest: '', trainingFocus: '',
+    hbStrengthEnabled: '', hbStrengthSessions: '', hbStrengthModifications: '',
+    hbYogaEnabled: '', hbYogaSessions: '', hbYogaFormat: '',
+    hbPhysioEnabled: '', hbPhysioSessions: '', hbPhysioFocusArea: '',
+    hbMentalEnabled: '', hbMentalSessions: '',
+    hbNutritionEnabled: '', hbNutritionApproach: '',
+  });
   const [currentStep, setCurrentStep] = useState(0);
   const [amrapProtocol, setAmrapProtocol] = useState('standard');
   const [amrapExerciseNotes, setAmrapExerciseNotes] = useState<Record<string, string>>({});

@@ -23,6 +23,7 @@ export interface TestDefinition {
   name: string;
   minAge?: number;
   maxAge?: number;
+  side?: 'left' | 'right';
   parameters: Parameter[];
 }
 
@@ -49,6 +50,15 @@ const opt = (label: string, value: string, severity: SeverityLevel, outputFlag: 
   outputFlag,
 });
 
+function bilateral(baseId: string, baseName: string, parameters: Parameter[]): [TestDefinition, TestDefinition] {
+  const makeParams = (side: 'left' | 'right'): Parameter[] =>
+    parameters.map(p => ({ ...p, id: `${p.id}_${side}` }));
+  return [
+    { id: `${baseId}_left`, name: baseName, side: 'left', parameters: makeParams('left') },
+    { id: `${baseId}_right`, name: baseName, side: 'right', parameters: makeParams('right') },
+  ];
+}
+
 // ============ MOBILITY ASSESSMENT ============
 export const mobilitySection: Section = {
   id: 'mobility',
@@ -60,360 +70,316 @@ export const mobilitySection: Section = {
       id: 'cervical',
       name: 'Cervical',
       tests: [
-        {
-          id: 'cervical_flexion',
-          name: 'Cervical Flexion',
-          parameters: [
-            {
-              id: 'cervical_flexion_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('Chin touches / very close to sternum', 'pass', 'green', 'Pass'),
-                opt('< 45° of movement', 'restricted', 'red', 'Restricted'),
-              ],
-            },
-            {
-              id: 'cervical_flexion_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain', 'pass', 'green', 'Pass'),
-                opt('Pain at neck or top of shoulders', 'pain', 'red', 'Painful'),
-              ],
-            },
-            {
-              id: 'cervical_flexion_compensation',
-              name: 'Compensatory Factor',
-              type: 'dropdown',
-              options: [
-                opt('No thoracic compensation', 'pass', 'green', 'Pass'),
-                opt('Excess thoracic flexion', 'compensated', 'red', 'Compensated'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'cervical_extension',
-          name: 'Cervical Extension',
-          parameters: [
-            {
-              id: 'cervical_extension_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('80°+ extension', 'pass', 'green', 'Pass'),
-                opt('Eyes cannot reach horizontal', 'restricted', 'red', 'Restriction'),
-              ],
-            },
-            {
-              id: 'cervical_extension_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain', 'pass', 'green', 'Pass'),
-                opt('Pain present', 'pain', 'red', 'Painful'),
-              ],
-            },
-            {
-              id: 'cervical_extension_compensation',
-              name: 'Compensatory Factor',
-              type: 'dropdown',
-              options: [
-                opt('No low-back compensation', 'pass', 'green', 'Pass'),
-                opt('Lumbar hinge pattern', 'compensated', 'red', 'Compensated'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'cervical_rotation',
-          name: 'Cervical Rotation (L + R)',
-          parameters: [
-            {
-              id: 'cervical_rotation_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('80° rotation', 'pass', 'green', 'Pass'),
-                opt('Asymmetry > 10°', 'restricted', 'red', 'Restriction'),
-              ],
-            },
-            {
-              id: 'cervical_rotation_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain', 'pass', 'green', 'Pass'),
-                opt('Pain present', 'pain', 'red', 'Painful'),
-              ],
-            },
-            {
-              id: 'cervical_rotation_symmetry',
-              name: 'Symmetry',
-              type: 'dropdown',
-              options: [
-                opt('Symmetrical', 'pass', 'green', 'Pass'),
-                opt('Tightness on one side', 'imbalance', 'red', 'Muscle Imbalance'),
-              ],
-            },
-          ],
-        },
+        ...bilateral('cervical_flexion', 'Cervical Flexion', [
+          {
+            id: 'cervical_flexion_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('Chin touches / very close to sternum', 'pass', 'green', 'Pass'),
+              opt('< 45° of movement', 'restricted', 'red', 'Restricted'),
+            ],
+          },
+          {
+            id: 'cervical_flexion_pain',
+            name: 'Pain',
+            type: 'dropdown',
+            options: [
+              opt('No pain', 'pass', 'green', 'Pass'),
+              opt('Pain at neck or top of shoulders', 'pain', 'red', 'Painful'),
+            ],
+          },
+          {
+            id: 'cervical_flexion_compensation',
+            name: 'Compensatory Factor',
+            type: 'dropdown',
+            options: [
+              opt('No thoracic compensation', 'pass', 'green', 'Pass'),
+              opt('Excess thoracic flexion', 'compensated', 'red', 'Compensated'),
+            ],
+          },
+        ]),
+        ...bilateral('cervical_extension', 'Cervical Extension', [
+          {
+            id: 'cervical_extension_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('80°+ extension', 'pass', 'green', 'Pass'),
+              opt('Eyes cannot reach horizontal', 'restricted', 'red', 'Restriction'),
+            ],
+          },
+          {
+            id: 'cervical_extension_pain',
+            name: 'Pain',
+            type: 'dropdown',
+            options: [
+              opt('No pain', 'pass', 'green', 'Pass'),
+              opt('Pain present', 'pain', 'red', 'Painful'),
+            ],
+          },
+          {
+            id: 'cervical_extension_compensation',
+            name: 'Compensatory Factor',
+            type: 'dropdown',
+            options: [
+              opt('No low-back compensation', 'pass', 'green', 'Pass'),
+              opt('Lumbar hinge pattern', 'compensated', 'red', 'Compensated'),
+            ],
+          },
+        ]),
+        ...bilateral('cervical_rotation', 'Cervical Rotation', [
+          {
+            id: 'cervical_rotation_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('80° rotation', 'pass', 'green', 'Pass'),
+              opt('Asymmetry > 10°', 'restricted', 'red', 'Restriction'),
+            ],
+          },
+          {
+            id: 'cervical_rotation_pain',
+            name: 'Pain',
+            type: 'dropdown',
+            options: [
+              opt('No pain', 'pass', 'green', 'Pass'),
+              opt('Pain present', 'pain', 'red', 'Painful'),
+            ],
+          },
+          {
+            id: 'cervical_rotation_symmetry',
+            name: 'Symmetry',
+            type: 'dropdown',
+            options: [
+              opt('Symmetrical', 'pass', 'green', 'Pass'),
+              opt('Tightness on one side', 'imbalance', 'red', 'Muscle Imbalance'),
+            ],
+          },
+        ]),
       ],
     },
     {
       id: 'hip',
       name: 'Hip',
       tests: [
-        {
-          id: 'hip_flexion',
-          name: 'Flexion',
-          parameters: [
-            {
-              id: 'hip_flexion_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('Thigh reaches ≥ 120° hip flexion', 'pass', 'green', 'Pass'),
-                opt('Thigh < 120°', 'restricted', 'red', 'Restricted'),
-              ],
-            },
-            {
-              id: 'hip_flexion_pelvic',
-              name: 'Pelvic Control',
-              type: 'dropdown',
-              options: [
-                opt('Sacrum stays neutral', 'pass', 'green', 'Pass'),
-                opt('Posterior pelvic tilt', 'poor_control', 'red', 'Poor Pelvic Control'),
-              ],
-            },
-            {
-              id: 'hip_flexion_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain', 'pass', 'green', 'Pass'),
-                opt('Pain / pinching in hip or groin', 'painful', 'red', 'Painful'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'hip_extension',
-          name: 'Extension',
-          parameters: [
-            {
-              id: 'hip_extension_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('Thigh drops to table or below', 'pass', 'green', 'Pass'),
-                opt('Thigh remains elevated', 'tight_flexor', 'red', 'Hip Flexor Tightness'),
-              ],
-            },
-            {
-              id: 'hip_extension_compensation',
-              name: 'Compensation',
-              type: 'dropdown',
-              options: [
-                opt('Knee flexes ~80–90°', 'pass', 'green', 'Pass'),
-                opt('Excess lumbar arch', 'lumbar_comp', 'red', 'Lumbar Compensation'),
-              ],
-            },
-            {
-              id: 'hip_extension_tightness',
-              name: 'Tightness',
-              type: 'dropdown',
-              options: [
-                opt('Pelvis neutral', 'pass', 'green', 'Pass'),
-                opt('Knee extends (rectus femoris)', 'rectus_tight', 'red', 'Rectus Femoris Tight'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'hip_internal_rotation',
-          name: 'Internal Rotation',
-          parameters: [
-            {
-              id: 'hip_ir_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('30–40° IR', 'pass', 'green', 'Pass'),
-                opt('< 30°', 'restricted', 'red', 'Restriction'),
-              ],
-            },
-            {
-              id: 'hip_ir_pelvis',
-              name: 'Pelvis Position',
-              type: 'dropdown',
-              options: [
-                opt('Pelvis stable', 'pass', 'green', 'Pass'),
-                opt('Pelvic shift', 'dissociation', 'red', 'Hip-Pelvis Dissociation'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'hip_external_rotation',
-          name: 'External Rotation',
-          parameters: [
-            {
-              id: 'hip_er_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('40–50° ER', 'pass', 'green', 'Pass'),
-                opt('< 40°', 'restricted', 'red', 'Restriction'),
-              ],
-            },
-            {
-              id: 'hip_er_pelvis',
-              name: 'Pelvis Position',
-              type: 'dropdown',
-              options: [
-                opt('Pelvis stable', 'pass', 'green', 'Pass'),
-                opt('Trunk lean or pelvic rotation', 'rotational_control', 'red', 'Rotational Hip Control'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'hip_abduction',
-          name: 'Abduction',
-          parameters: [
-            {
-              id: 'hip_abd_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('35–45° abduction', 'pass', 'green', 'Pass'),
-                opt('Limited lift', 'restricted', 'red', 'Restricted'),
-              ],
-            },
-            {
-              id: 'hip_abd_pelvic',
-              name: 'Pelvic Stability',
-              type: 'dropdown',
-              options: [
-                opt('Pelvis stacked', 'pass', 'green', 'Pass'),
-                opt('Pelvic hike or roll', 'instability', 'red', 'Pelvic Instability'),
-              ],
-            },
-          ],
-        },
-        {
-          id: 'hip_adduction',
-          name: 'Adduction',
-          parameters: [
-            {
-              id: 'hip_add_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('20–30° adduction', 'pass', 'green', 'Pass'),
-                opt('Limited ROM', 'restriction', 'red', 'Restriction'),
-              ],
-            },
-            {
-              id: 'hip_add_pelvic',
-              name: 'Pelvic Stability',
-              type: 'dropdown',
-              options: [
-                opt('Pelvis stable', 'pass', 'green', 'Pass'),
-                opt('Trunk shift', 'instability', 'red', 'Medial Hip Instability'),
-              ],
-            },
-          ],
-        },
+        ...bilateral('hip_flexion', 'Flexion', [
+          {
+            id: 'hip_flexion_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('Thigh reaches ≥ 120° hip flexion', 'pass', 'green', 'Pass'),
+              opt('Thigh < 120°', 'restricted', 'red', 'Restricted'),
+            ],
+          },
+          {
+            id: 'hip_flexion_pelvic',
+            name: 'Pelvic Control',
+            type: 'dropdown',
+            options: [
+              opt('Sacrum stays neutral', 'pass', 'green', 'Pass'),
+              opt('Posterior pelvic tilt', 'poor_control', 'red', 'Poor Pelvic Control'),
+            ],
+          },
+          {
+            id: 'hip_flexion_pain',
+            name: 'Pain',
+            type: 'dropdown',
+            options: [
+              opt('No pain', 'pass', 'green', 'Pass'),
+              opt('Pain / pinching in hip or groin', 'painful', 'red', 'Painful'),
+            ],
+          },
+        ]),
+        ...bilateral('hip_extension', 'Extension', [
+          {
+            id: 'hip_extension_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('Thigh drops to table or below', 'pass', 'green', 'Pass'),
+              opt('Thigh remains elevated', 'tight_flexor', 'red', 'Hip Flexor Tightness'),
+            ],
+          },
+          {
+            id: 'hip_extension_compensation',
+            name: 'Compensation',
+            type: 'dropdown',
+            options: [
+              opt('Knee flexes ~80–90°', 'pass', 'green', 'Pass'),
+              opt('Excess lumbar arch', 'lumbar_comp', 'red', 'Lumbar Compensation'),
+            ],
+          },
+          {
+            id: 'hip_extension_tightness',
+            name: 'Tightness',
+            type: 'dropdown',
+            options: [
+              opt('Pelvis neutral', 'pass', 'green', 'Pass'),
+              opt('Knee extends (rectus femoris)', 'rectus_tight', 'red', 'Rectus Femoris Tight'),
+            ],
+          },
+        ]),
+        ...bilateral('hip_ir', 'Internal Rotation', [
+          {
+            id: 'hip_ir_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('30–40° IR', 'pass', 'green', 'Pass'),
+              opt('< 30°', 'restricted', 'red', 'Restriction'),
+            ],
+          },
+          {
+            id: 'hip_ir_pelvis',
+            name: 'Pelvis Position',
+            type: 'dropdown',
+            options: [
+              opt('Pelvis stable', 'pass', 'green', 'Pass'),
+              opt('Pelvic shift', 'dissociation', 'red', 'Hip-Pelvis Dissociation'),
+            ],
+          },
+        ]),
+        ...bilateral('hip_er', 'External Rotation', [
+          {
+            id: 'hip_er_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('40–50° ER', 'pass', 'green', 'Pass'),
+              opt('< 40°', 'restricted', 'red', 'Restriction'),
+            ],
+          },
+          {
+            id: 'hip_er_pelvis',
+            name: 'Pelvis Position',
+            type: 'dropdown',
+            options: [
+              opt('Pelvis stable', 'pass', 'green', 'Pass'),
+              opt('Trunk lean or pelvic rotation', 'rotational_control', 'red', 'Rotational Hip Control'),
+            ],
+          },
+        ]),
+        ...bilateral('hip_abduction', 'Abduction', [
+          {
+            id: 'hip_abd_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('35–45° abduction', 'pass', 'green', 'Pass'),
+              opt('Limited lift', 'restricted', 'red', 'Restricted'),
+            ],
+          },
+          {
+            id: 'hip_abd_pelvic',
+            name: 'Pelvic Stability',
+            type: 'dropdown',
+            options: [
+              opt('Pelvis stacked', 'pass', 'green', 'Pass'),
+              opt('Pelvic hike or roll', 'instability', 'red', 'Pelvic Instability'),
+            ],
+          },
+        ]),
+        ...bilateral('hip_adduction', 'Adduction', [
+          {
+            id: 'hip_add_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('20–30° adduction', 'pass', 'green', 'Pass'),
+              opt('Limited ROM', 'restriction', 'red', 'Restriction'),
+            ],
+          },
+          {
+            id: 'hip_add_pelvic',
+            name: 'Pelvic Stability',
+            type: 'dropdown',
+            options: [
+              opt('Pelvis stable', 'pass', 'green', 'Pass'),
+              opt('Trunk shift', 'instability', 'red', 'Medial Hip Instability'),
+            ],
+          },
+        ]),
       ],
     },
     {
       id: 'ankle',
       name: 'Ankle',
       tests: [
-        {
-          id: 'ankle_dorsiflexion',
-          name: 'Dorsiflexion',
-          parameters: [
-            {
-              id: 'ankle_df_movement',
-              name: 'Movement',
-              type: 'dropdown',
-              options: [
-                opt('Knee touches wall, heel stays down', 'pass', 'green', 'Pass'),
-                opt('Knee cannot reach wall / heel lifts', 'restricted', 'red', 'Restricted'),
-              ],
-            },
-            {
-              id: 'ankle_df_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('No pain', 'pass', 'green', 'Pass'),
-                opt('Pain or pinching in ankle', 'painful', 'red', 'Painful'),
-              ],
-            },
-            {
-              id: 'ankle_df_stability',
-              name: 'Stability',
-              type: 'dropdown',
-              options: [
-                opt('Controlled movement', 'pass', 'green', 'Pass'),
-                opt('Foot collapses (excess pronation)', 'instability', 'red', 'Foot Instability'),
-              ],
-            },
-            {
-              id: 'ankle_df_alignment',
-              name: 'Alignment',
-              type: 'dropdown',
-              options: [
-                opt('Pelvis remains neutral', 'pass', 'green', 'Pass'),
-                opt('Knee deviates medially / laterally', 'tracking', 'red', 'Poor Knee Tracking'),
-              ],
-            },
-          ],
-        },
+        ...bilateral('ankle_dorsiflexion', 'Dorsiflexion', [
+          {
+            id: 'ankle_df_movement',
+            name: 'Movement',
+            type: 'dropdown',
+            options: [
+              opt('Knee touches wall, heel stays down', 'pass', 'green', 'Pass'),
+              opt('Knee cannot reach wall / heel lifts', 'restricted', 'red', 'Restricted'),
+            ],
+          },
+          {
+            id: 'ankle_df_pain',
+            name: 'Pain',
+            type: 'dropdown',
+            options: [
+              opt('No pain', 'pass', 'green', 'Pass'),
+              opt('Pain or pinching in ankle', 'painful', 'red', 'Painful'),
+            ],
+          },
+          {
+            id: 'ankle_df_stability',
+            name: 'Stability',
+            type: 'dropdown',
+            options: [
+              opt('Controlled movement', 'pass', 'green', 'Pass'),
+              opt('Foot collapses (excess pronation)', 'instability', 'red', 'Foot Instability'),
+            ],
+          },
+          {
+            id: 'ankle_df_alignment',
+            name: 'Alignment',
+            type: 'dropdown',
+            options: [
+              opt('Pelvis remains neutral', 'pass', 'green', 'Pass'),
+              opt('Knee deviates medially / laterally', 'tracking', 'red', 'Poor Knee Tracking'),
+            ],
+          },
+        ]),
       ],
     },
     {
       id: 'shoulder',
       name: 'Shoulder',
       tests: [
-        {
-          id: 'shoulder_scapulo',
-          name: 'Scapulo-Humeral Mobility',
-          parameters: [
-            {
-              id: 'shoulder_mobility',
-              name: 'Mobility',
-              type: 'dropdown',
-              options: [
-                opt('Fists > one hand-length apart', 'pass', 'green', 'Pass'),
-                opt('Fists close but < one hand-length', 'moderate', 'red', 'Moderate Limitation'),
-              ],
-            },
-            {
-              id: 'shoulder_compensation',
-              name: 'Compensation',
-              type: 'dropdown',
-              options: [
-                opt('No rounding / twisting', 'pass', 'green', 'Pass'),
-                opt('Mild stiffness or compensation', 'limited', 'red', 'Limited Shoulder Mobility'),
-              ],
-            },
-            {
-              id: 'shoulder_pain',
-              name: 'Pain',
-              type: 'dropdown',
-              options: [
-                opt('Pain-free', 'pass', 'green', 'Pass'),
-                opt('Movement looks restricted / uncomfortable', 'painful', 'red', 'Painful'),
-              ],
-            },
-          ],
-        },
+        ...bilateral('shoulder_scapulo', 'Scapulo-Humeral Mobility', [
+          {
+            id: 'shoulder_mobility',
+            name: 'Mobility',
+            type: 'dropdown',
+            options: [
+              opt('Fists > one hand-length apart', 'pass', 'green', 'Pass'),
+              opt('Fists close but < one hand-length', 'moderate', 'red', 'Moderate Limitation'),
+            ],
+          },
+          {
+            id: 'shoulder_compensation',
+            name: 'Compensation',
+            type: 'dropdown',
+            options: [
+              opt('No rounding / twisting', 'pass', 'green', 'Pass'),
+              opt('Mild stiffness or compensation', 'limited', 'red', 'Limited Shoulder Mobility'),
+            ],
+          },
+          {
+            id: 'shoulder_pain',
+            name: 'Pain',
+            type: 'dropdown',
+            options: [
+              opt('Pain-free', 'pass', 'green', 'Pass'),
+              opt('Movement looks restricted / uncomfortable', 'painful', 'red', 'Painful'),
+            ],
+          },
+        ]),
       ],
     },
     {
@@ -471,59 +437,55 @@ export const mobilitySection: Section = {
             },
           ],
         },
-        {
-          id: 'spine_aslr',
-          name: 'Active Straight Leg Raise',
-          parameters: [
-            {
-              id: 'aslr_tightness_1',
-              name: 'Tightness (Moving Leg)',
-              type: 'dropdown',
-              options: [
-                opt('Raised leg reaches 70–90° without compensation', 'pass', 'green', 'Pass'),
-                opt('Raised leg < 70° without compensation', 'restriction', 'red', 'ROM restriction'),
-                opt('Moving leg remains straight', 'straight', 'green', 'Pass'),
-                opt('Moving knee bends', 'hamstrings', 'red', 'Tight Hamstrings'),
-              ],
-            },
-            {
-              id: 'aslr_tightness_2',
-              name: 'Tightness (Grounded Leg)',
-              type: 'dropdown',
-              options: [
-                opt('Bottom leg stays grounded', 'pass', 'green', 'Pass'),
-                opt('Bottom heel lifts', 'flexors', 'red', 'Tight Hip Flexors (Grounded)'),
-              ],
-            },
-            {
-              id: 'aslr_pelvic_pos',
-              name: 'Pelvic Position',
-              type: 'dropdown',
-              options: [
-                opt('Pelvis remains neutral and stable', 'pass', 'green', 'Pass'),
-                opt('Posterior pelvic tilt', 'dominant', 'red', 'Hamstrings Dominant'),
-              ],
-            },
-            {
-              id: 'aslr_arching',
-              name: 'Arching of Spine',
-              type: 'dropdown',
-              options: [
-                opt('Lumbar spine remains neutral', 'pass', 'green', 'Pass'),
-                opt('Lumbar extension (arching)', 'weak_core', 'red', 'Weak Deep Core'),
-              ],
-            },
-            {
-              id: 'aslr_hip_imbalance',
-              name: 'Hip Imbalance',
-              type: 'dropdown',
-              options: [
-                opt('Both sides show similar control and range', 'pass', 'green', 'Pass'),
-                opt('Lower leg rotates outward', 'imbalance', 'red', 'Hip Imbalance'),
-              ],
-            },
-          ],
-        },
+        ...bilateral('spine_aslr', 'Active Straight Leg Raise', [
+          {
+            id: 'aslr_tightness_1',
+            name: 'Tightness (Moving Leg)',
+            type: 'dropdown',
+            options: [
+              opt('Raised leg reaches 70–90° without compensation', 'pass', 'green', 'Pass'),
+              opt('Raised leg < 70° without compensation', 'restriction', 'red', 'ROM restriction'),
+              opt('Moving leg remains straight', 'straight', 'green', 'Pass'),
+              opt('Moving knee bends', 'hamstrings', 'red', 'Tight Hamstrings'),
+            ],
+          },
+          {
+            id: 'aslr_tightness_2',
+            name: 'Tightness (Grounded Leg)',
+            type: 'dropdown',
+            options: [
+              opt('Bottom leg stays grounded', 'pass', 'green', 'Pass'),
+              opt('Bottom heel lifts', 'flexors', 'red', 'Tight Hip Flexors (Grounded)'),
+            ],
+          },
+          {
+            id: 'aslr_pelvic_pos',
+            name: 'Pelvic Position',
+            type: 'dropdown',
+            options: [
+              opt('Pelvis remains neutral and stable', 'pass', 'green', 'Pass'),
+              opt('Posterior pelvic tilt', 'dominant', 'red', 'Hamstrings Dominant'),
+            ],
+          },
+          {
+            id: 'aslr_arching',
+            name: 'Arching of Spine',
+            type: 'dropdown',
+            options: [
+              opt('Lumbar spine remains neutral', 'pass', 'green', 'Pass'),
+              opt('Lumbar extension (arching)', 'weak_core', 'red', 'Weak Deep Core'),
+            ],
+          },
+          {
+            id: 'aslr_hip_imbalance',
+            name: 'Hip Imbalance',
+            type: 'dropdown',
+            options: [
+              opt('Both sides show similar control and range', 'pass', 'green', 'Pass'),
+              opt('Lower leg rotates outward', 'imbalance', 'red', 'Hip Imbalance'),
+            ],
+          },
+        ]),
       ],
     },
   ],

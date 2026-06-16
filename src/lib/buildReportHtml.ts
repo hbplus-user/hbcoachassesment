@@ -26,8 +26,10 @@ type ReportCtx = {
   numericResults: Record<string, number>;
   testNotes: Record<string, string>;
   coachNotes: {
-    movementCorrections: string;
-    injuryPrecautions: string;
+    roadMap: string;
+    currentPlanType: string;
+    currentPlanDays: string;
+    currentPlanSuggest: string;
     trainingFocus: string;
   };
   amrapProtocol: string;
@@ -331,15 +333,19 @@ export function buildCoachReportHtml(ctx: ReportCtx, opts: { isClientReport?: bo
 
   // ── Coach summary notes ───────────────────────────────────────────────────
   const cnHtml = [
-    coachNotes.movementCorrections && `
+    coachNotes.roadMap && `
       <div style="margin-bottom:10px;">
-        <div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Movement Corrections</div>
-        <p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.movementCorrections}</p>
+        <div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Road Map</div>
+        <p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.roadMap}</p>
       </div>`,
-    coachNotes.injuryPrecautions && `
+    (coachNotes.currentPlanType || coachNotes.currentPlanDays || coachNotes.currentPlanSuggest) && `
       <div style="margin-bottom:10px;">
-        <div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Injury Precautions</div>
-        <p style="font-size:10px;color:${COLORS.muted};margin:0;">${coachNotes.injuryPrecautions}</p>
+        <div style="font-weight:700;font-size:11px;color:${COLORS.text};margin-bottom:2px;">Current Plan</div>
+        <div style="font-size:10px;color:${COLORS.muted};margin:0;line-height:1.4;">
+          ${coachNotes.currentPlanType ? `<p style="margin:0 0 2px 0;">Type: <span style="text-transform:capitalize;">${coachNotes.currentPlanType}</span></p>` : ''}
+          ${coachNotes.currentPlanDays ? `<p style="margin:0 0 2px 0;">Duration: ${coachNotes.currentPlanDays} days</p>` : ''}
+          ${coachNotes.currentPlanSuggest ? `<p style="margin:2px 0 0 0;">${coachNotes.currentPlanSuggest}</p>` : ''}
+        </div>
       </div>`,
     coachNotes.trainingFocus && `
       <div>
