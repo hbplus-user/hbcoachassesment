@@ -104,12 +104,6 @@ export function CoachNotesStep() {
                 onChange={e => update('hbStrengthSessions', e.target.value)}
                 className="w-20 h-8 text-sm bg-white"
               />
-              <span className="text-sm text-muted-foreground shrink-0">Modifications:</span>
-              <Input
-                value={coachNotes.hbStrengthModifications}
-                onChange={e => update('hbStrengthModifications', e.target.value)}
-                className="flex-1 min-w-[120px] h-8 text-sm bg-white"
-              />
             </div>
 
             {/* Yoga & Mobility */}
@@ -125,13 +119,6 @@ export function CoachNotesStep() {
                 value={coachNotes.hbYogaSessions}
                 onChange={e => update('hbYogaSessions', e.target.value)}
                 className="w-20 h-8 text-sm bg-white"
-              />
-              <span className="text-sm text-muted-foreground shrink-0">Format:</span>
-              <Input
-                value={coachNotes.hbYogaFormat}
-                onChange={e => update('hbYogaFormat', e.target.value)}
-                placeholder="Restorative"
-                className="flex-1 min-w-[120px] h-8 text-sm bg-white"
               />
             </div>
 
@@ -149,42 +136,16 @@ export function CoachNotesStep() {
                 onChange={e => update('hbPhysioSessions', e.target.value)}
                 className="w-20 h-8 text-sm bg-white"
               />
-              <span className="text-sm text-muted-foreground shrink-0">Focus area:</span>
-              <Input
-                value={coachNotes.hbPhysioFocusArea}
-                onChange={e => update('hbPhysioFocusArea', e.target.value)}
-                className="flex-1 min-w-[120px] h-8 text-sm bg-white"
-              />
             </div>
 
-            {/* Mental Wellness Sessions */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-              <Checkbox
-                checked={coachNotes.hbMentalEnabled === 'true'}
-                onCheckedChange={v => update('hbMentalEnabled', v ? 'true' : '')}
-              />
-              <span className="font-semibold text-sm w-48 shrink-0">Mental Wellness Sessions</span>
-              <span className="text-sm text-muted-foreground shrink-0">Sessions/month:</span>
-              <Input
-                type="number" min={1}
-                value={coachNotes.hbMentalSessions}
-                onChange={e => update('hbMentalSessions', e.target.value)}
-                className="w-20 h-8 text-sm bg-white"
-              />
-            </div>
 
-            {/* Nutrition Programme Direction */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-              <Checkbox
-                checked={coachNotes.hbNutritionEnabled === 'true'}
-                onCheckedChange={v => update('hbNutritionEnabled', v ? 'true' : '')}
-              />
-              <span className="font-semibold text-sm w-48 shrink-0">Nutrition Programme Direction</span>
-              <span className="text-sm text-muted-foreground shrink-0">Approach:</span>
+            {/* Free text row */}
+            <div className="px-4 py-3">
               <Input
                 value={coachNotes.hbNutritionApproach}
                 onChange={e => update('hbNutritionApproach', e.target.value)}
-                className="flex-1 min-w-[120px] h-8 text-sm bg-white"
+                placeholder="Additional notes..."
+                className="w-full h-9 text-sm bg-white"
               />
             </div>
 

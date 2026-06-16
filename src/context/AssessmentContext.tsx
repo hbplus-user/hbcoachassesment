@@ -19,16 +19,10 @@ export interface CoachNotes {
   // HB+ Services Prescribed
   hbStrengthEnabled: string;
   hbStrengthSessions: string;
-  hbStrengthModifications: string;
   hbYogaEnabled: string;
   hbYogaSessions: string;
-  hbYogaFormat: string;
   hbPhysioEnabled: string;
   hbPhysioSessions: string;
-  hbPhysioFocusArea: string;
-  hbMentalEnabled: string;
-  hbMentalSessions: string;
-  hbNutritionEnabled: string;
   hbNutritionApproach: string;
 }
 
@@ -68,11 +62,10 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
   const [testNotes, setTestNotes] = useState<Record<string, string>>({});
   const [coachNotes, setCoachNotes] = useState<CoachNotes>({
     roadMap: '', currentPlanType: '', currentPlanDays: '', currentPlanSuggest: '', trainingFocus: '',
-    hbStrengthEnabled: '', hbStrengthSessions: '', hbStrengthModifications: '',
-    hbYogaEnabled: '', hbYogaSessions: '', hbYogaFormat: '',
-    hbPhysioEnabled: '', hbPhysioSessions: '', hbPhysioFocusArea: '',
-    hbMentalEnabled: '', hbMentalSessions: '',
-    hbNutritionEnabled: '', hbNutritionApproach: '',
+    hbStrengthEnabled: '', hbStrengthSessions: '',
+    hbYogaEnabled: '', hbYogaSessions: '',
+    hbPhysioEnabled: '', hbPhysioSessions: '',
+    hbNutritionApproach: '',
   });
   const [currentStep, setCurrentStep] = useState(0);
   const [amrapProtocol, setAmrapProtocol] = useState('standard');

@@ -521,7 +521,7 @@ export default function CoachReport() {
         )}
 
         {/* HB+ Services Prescribed */}
-        {(coachNotes.hbStrengthEnabled || coachNotes.hbYogaEnabled || coachNotes.hbPhysioEnabled || coachNotes.hbMentalEnabled || coachNotes.hbNutritionEnabled) && (
+        {(coachNotes.hbStrengthEnabled || coachNotes.hbYogaEnabled || coachNotes.hbPhysioEnabled || coachNotes.hbMentalEnabled || coachNotes.hbNutritionApproach) && (
           <Card className="overflow-hidden print-break">
             <div className="px-6 py-3 bg-[#6b2c2c]">
               <p className="text-xs font-bold tracking-widest text-[#f5e6d3] uppercase">
@@ -533,34 +533,22 @@ export default function CoachReport() {
                 <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3">
                   <span className="font-semibold w-48 shrink-0">Strength & Conditioning</span>
                   {coachNotes.hbStrengthSessions && <span className="text-muted-foreground">Sessions/week: <strong>{coachNotes.hbStrengthSessions}</strong></span>}
-                  {coachNotes.hbStrengthModifications && <span className="text-muted-foreground">Modifications: <strong>{coachNotes.hbStrengthModifications}</strong></span>}
                 </div>
               )}
               {coachNotes.hbYogaEnabled === 'true' && (
                 <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3">
                   <span className="font-semibold w-48 shrink-0">Yoga & Mobility</span>
                   {coachNotes.hbYogaSessions && <span className="text-muted-foreground">Sessions/week: <strong>{coachNotes.hbYogaSessions}</strong></span>}
-                  {coachNotes.hbYogaFormat && <span className="text-muted-foreground">Format: <strong>{coachNotes.hbYogaFormat}</strong></span>}
                 </div>
               )}
               {coachNotes.hbPhysioEnabled === 'true' && (
                 <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3">
                   <span className="font-semibold w-48 shrink-0">Physiotherapy / Movement Rehab</span>
                   {coachNotes.hbPhysioSessions && <span className="text-muted-foreground">Sessions/week: <strong>{coachNotes.hbPhysioSessions}</strong></span>}
-                  {coachNotes.hbPhysioFocusArea && <span className="text-muted-foreground">Focus area: <strong>{coachNotes.hbPhysioFocusArea}</strong></span>}
                 </div>
               )}
-              {coachNotes.hbMentalEnabled === 'true' && (
-                <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3">
-                  <span className="font-semibold w-48 shrink-0">Mental Wellness Sessions</span>
-                  {coachNotes.hbMentalSessions && <span className="text-muted-foreground">Sessions/month: <strong>{coachNotes.hbMentalSessions}</strong></span>}
-                </div>
-              )}
-              {coachNotes.hbNutritionEnabled === 'true' && (
-                <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3">
-                  <span className="font-semibold w-48 shrink-0">Nutrition Programme Direction</span>
-                  {coachNotes.hbNutritionApproach && <span className="text-muted-foreground">Approach: <strong>{coachNotes.hbNutritionApproach}</strong></span>}
-                </div>
+              {coachNotes.hbNutritionApproach && (
+                <div className="px-6 py-3 text-muted-foreground">{coachNotes.hbNutritionApproach}</div>
               )}
             </div>
           </Card>
