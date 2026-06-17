@@ -12,19 +12,13 @@ export interface ClientInfo {
 
 export interface CoachNotes {
   roadMap: string;
-  currentPlanType: string;
-  currentPlanDays: string;
-  currentPlanSuggest: string;
-  trainingFocus: string;
-  // HB+ Services Prescribed
-  hbStrengthEnabled: string;
-  hbStrengthSessions: string;
-  hbYogaEnabled: string;
-  hbYogaSessions: string;
-  hbPhysioEnabled: string;
-  hbPhysioSessions: string;
-  hbMentalEnabled: string;
-  hbMentalSessions: string;
+  notes: string;
+  // HB+ Prescribed Services
+  hbStrength: string;
+  hbYoga: string;
+  hbPhysio: string;
+  hbMental: string;
+  hbMeditation: string;
   hbNutritionApproach: string;
 }
 
@@ -63,11 +57,8 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
   const [numericResults, setNumericResults] = useState<Record<string, number>>({});
   const [testNotes, setTestNotes] = useState<Record<string, string>>({});
   const [coachNotes, setCoachNotes] = useState<CoachNotes>({
-    roadMap: '', currentPlanType: '', currentPlanDays: '', currentPlanSuggest: '', trainingFocus: '',
-    hbStrengthEnabled: '', hbStrengthSessions: '',
-    hbYogaEnabled: '', hbYogaSessions: '',
-    hbPhysioEnabled: '', hbPhysioSessions: '',
-    hbMentalEnabled: '', hbMentalSessions: '',
+    roadMap: '', notes: '',
+    hbStrength: '', hbYoga: '', hbPhysio: '', hbMental: '', hbMeditation: '',
     hbNutritionApproach: '',
   });
   const [currentStep, setCurrentStep] = useState(0);

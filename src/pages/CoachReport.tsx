@@ -484,7 +484,7 @@ export default function CoachReport() {
         </Card>
 
         {/* Coach Notes */}
-        {(coachNotes.roadMap || coachNotes.currentPlanType || coachNotes.currentPlanDays || coachNotes.currentPlanSuggest || coachNotes.trainingFocus) && (
+        {(coachNotes.roadMap || coachNotes.notes) && (
           <Card className="p-6 print-break">
             <h2 className="text-lg font-bold text-foreground mb-4 border-b border-border pb-2">📝 Coach Notes</h2>
             <div className="space-y-4 text-sm">
@@ -494,76 +494,48 @@ export default function CoachReport() {
                   <p className="text-muted-foreground mt-1">{coachNotes.roadMap}</p>
                 </div>
               )}
-              {(coachNotes.currentPlanType || coachNotes.currentPlanDays || coachNotes.currentPlanSuggest) && (
+              {coachNotes.notes && (
                 <div>
-                  <div className="font-semibold text-foreground">Current Plan</div>
-                  <div className="mt-1 space-y-1 text-muted-foreground">
-                    {coachNotes.currentPlanType && (
-                      <p>Type: <span className="capitalize">{coachNotes.currentPlanType}</span></p>
-                    )}
-                    {coachNotes.currentPlanDays && (
-                      <p>Duration: {coachNotes.currentPlanDays} days</p>
-                    )}
-                    {coachNotes.currentPlanSuggest && (
-                      <p className="mt-1">{coachNotes.currentPlanSuggest}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-              {coachNotes.trainingFocus && (
-                <div>
-                  <div className="font-semibold text-foreground">Training Focus</div>
-                  <p className="text-muted-foreground mt-1">{coachNotes.trainingFocus}</p>
+                  <div className="font-semibold text-foreground">Coach Notes</div>
+                  <p className="text-muted-foreground mt-1">{coachNotes.notes}</p>
                 </div>
               )}
             </div>
           </Card>
         )}
 
-        {/* HB+ Services Prescribed */}
+        {/* HB+ Prescribed Services */}
         {(() => {
-          const showStrength = coachNotes.hbStrengthEnabled === 'true' || !!coachNotes.hbStrengthSessions;
-          const showYoga     = coachNotes.hbYogaEnabled === 'true'     || !!coachNotes.hbYogaSessions;
-          const showPhysio   = coachNotes.hbPhysioEnabled === 'true'   || !!coachNotes.hbPhysioSessions;
-          const showMental   = coachNotes.hbMentalEnabled === 'true'   || !!coachNotes.hbMentalSessions;
-          const showNotes    = !!coachNotes.hbNutritionApproach;
-          if (!showStrength && !showYoga && !showPhysio && !showMental && !showNotes) return null;
+          const hbBadge = (val: string) => {
+            const isCompulsory = val === 'compulsory';
+            const label = isCompulsory ? 'Compulsory' : 'Recommended';
+            const bg = isCompulsory ? '#6b2c2c' : '#e5e7eb';
+            const color = isCompulsory ? '#fff' : '#6b7280';
+            return <span style={{fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background:bg, color, whiteSpace:'nowrap'}}>{label}</span>;
+          };
+          const services: Array<{label: string; key: keyof typeof coachNotes}> = [
+            { label: 'Strength & Conditioning', key: 'hbStrength' },
+            { label: 'Yoga',                    key: 'hbYoga' },
+            { label: 'Physiotherapy',           key: 'hbPhysio' },
+            { label: 'Mental Wellness',         key: 'hbMental' },
+            { label: 'Meditation',              key: 'hbMeditation' },
+          ];
+          const activeServices = services.filter(s => !!coachNotes[s.key]);
+          if (!activeServices.length && !coachNotes.hbNutritionApproach) return null;
           return (
             <Card className="print-break">
               <div className="px-6 py-3 bg-[#6b2c2c] rounded-t-lg">
                 <p className="text-xs font-bold tracking-widest text-[#f5e6d3] uppercase">
-                  HB+ Services Prescribed (Tick all that apply and note frequency)
+                  HB+ Prescribed Services
                 </p>
               </div>
-              {showStrength && (
-                <div style={{position:'relative', padding:'10px 16px 10px 16px', borderBottom:'1px solid #e5e7eb', paddingRight:'130px'}}>
-                  <span style={{fontWeight:600, marginRight:'24px'}}>Strength & Conditioning</span>
-                  {coachNotes.hbStrengthSessions && <span style={{color:'#6b7280'}}>Sessions/week: <strong>{coachNotes.hbStrengthSessions}</strong></span>}
-                  <span style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background: coachNotes.hbStrengthEnabled === 'true' ? '#6b2c2c' : '#e5e7eb', color: coachNotes.hbStrengthEnabled === 'true' ? '#fff' : '#6b7280', whiteSpace:'nowrap'}}>{coachNotes.hbStrengthEnabled === 'true' ? 'Mandatory' : 'Optional'}</span>
+              {activeServices.map((s) => (
+                <div key={s.key} style={{display:'flex', alignItems:'center', padding:'10px 16px', borderBottom:'1px solid #e5e7eb'}}>
+                  <span style={{fontWeight:600, flex:1}}>{s.label}</span>
+                  {hbBadge(coachNotes[s.key] as string)}
                 </div>
-              )}
-              {showYoga && (
-                <div style={{position:'relative', padding:'10px 16px 10px 16px', borderBottom:'1px solid #e5e7eb', paddingRight:'130px'}}>
-                  <span style={{fontWeight:600, marginRight:'24px'}}>Yoga & Mobility</span>
-                  {coachNotes.hbYogaSessions && <span style={{color:'#6b7280'}}>Sessions/week: <strong>{coachNotes.hbYogaSessions}</strong></span>}
-                  <span style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background: coachNotes.hbYogaEnabled === 'true' ? '#6b2c2c' : '#e5e7eb', color: coachNotes.hbYogaEnabled === 'true' ? '#fff' : '#6b7280', whiteSpace:'nowrap'}}>{coachNotes.hbYogaEnabled === 'true' ? 'Mandatory' : 'Optional'}</span>
-                </div>
-              )}
-              {showPhysio && (
-                <div style={{position:'relative', padding:'10px 16px 10px 16px', borderBottom:'1px solid #e5e7eb', paddingRight:'130px'}}>
-                  <span style={{fontWeight:600, marginRight:'24px'}}>Physiotherapy / Movement Rehab</span>
-                  {coachNotes.hbPhysioSessions && <span style={{color:'#6b7280'}}>Sessions/week: <strong>{coachNotes.hbPhysioSessions}</strong></span>}
-                  <span style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background: coachNotes.hbPhysioEnabled === 'true' ? '#6b2c2c' : '#e5e7eb', color: coachNotes.hbPhysioEnabled === 'true' ? '#fff' : '#6b7280', whiteSpace:'nowrap'}}>{coachNotes.hbPhysioEnabled === 'true' ? 'Mandatory' : 'Optional'}</span>
-                </div>
-              )}
-              {showMental && (
-                <div style={{position:'relative', padding:'10px 16px 10px 16px', borderBottom:'1px solid #e5e7eb', paddingRight:'130px'}}>
-                  <span style={{fontWeight:600, marginRight:'24px'}}>Mental Wellness / Coaching</span>
-                  {coachNotes.hbMentalSessions && <span style={{color:'#6b7280'}}>Sessions/week: <strong>{coachNotes.hbMentalSessions}</strong></span>}
-                  <span style={{position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontSize:'11px', fontWeight:700, padding:'3px 10px', borderRadius:'4px', background: coachNotes.hbMentalEnabled === 'true' ? '#6b2c2c' : '#e5e7eb', color: coachNotes.hbMentalEnabled === 'true' ? '#fff' : '#6b7280', whiteSpace:'nowrap'}}>{coachNotes.hbMentalEnabled === 'true' ? 'Mandatory' : 'Optional'}</span>
-                </div>
-              )}
-              {showNotes && (
+              ))}
+              {coachNotes.hbNutritionApproach && (
                 <div className="px-6 py-3 text-muted-foreground border-t border-border">{coachNotes.hbNutritionApproach}</div>
               )}
             </Card>
